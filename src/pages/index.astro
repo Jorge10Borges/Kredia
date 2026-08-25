@@ -1,17 +1,51 @@
 ---
+import '../styles/global.css';
+import MainLayout from '../layouts/MainLayout.astro';
+import { customers, dashboardStats, formatCurrency, lowStockProducts, recentSales, salesByDay } from '../data/mock';
 
+const statCards = [
+	{ label: 'Ventas del mes', value: formatCurrency(dashboardStats.sales), change: '+12.8%', note: 'vs. mes anterior', tone: 'forest', icon: '↗' },
+	{ label: 'Compras del mes', value: formatCurrency(dashboardStats.purchases), change: '+4.6%', note: 'vs. mes anterior', tone: 'coral', icon: '↙' },
+	{ label: 'Por cobrar', value: formatCurrency(dashboardStats.receivables), change: '8 cuentas', note: 'requieren seguimiento', tone: 'sun', icon: '◒' },
+	{ label: 'Caja disponible', value: formatCurrency(dashboardStats.cash), change: 'Abierta', note: 'corte a las 11:30 am', tone: 'slate', icon: '$' },
+];
+
+const weekdays = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 ---
 
-<html lang="en">
-	<head>
-		<meta charset="utf-8" />
-		<link rel="icon" type="image/svg+xml" href="/favicon.svg" />
-		<link rel="icon" href="/favicon.ico" />
-		<meta name="viewport" content="width=device-width" />
-		<meta name="generator" content={Astro.generator} />
-		<title>Astro</title>
-	</head>
-	<body>
-		<h1>Astro</h1>
-	</body>
-</html>
+<MainLayout title="Dashboard">
+	<section class="mx-auto w-full max-w-3xl space-y-6 px-4 pb-4 pt-5 sm:px-6 md:max-w-none md:px-8 md:pt-8">
+		<div class="mb-8 flex flex-col justify-between gap-5 md:flex-row md:items-end">
+			<div><p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-forest">Resumen operativo</p><h2 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Todo bajo control.</h2><p class="mt-2 max-w-xl text-sm leading-6 text-muted">Una vista clara de lo que está pasando en tu negocio hoy.</p></div>
+			<div class="flex flex-wrap gap-2"><label class="sr-only" for="period">Periodo</label><select id="period" class="rounded-xl border border-line bg-white px-4 py-2.5 text-sm font-bold text-ink outline-none focus:border-forest"><option>Este mes</option><option>Esta semana</option><option>Hoy</option></select><a href="/ventas" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#164737]">Nueva venta <span class="ml-1 text-base">+</span></a></div>
+		</div>
+
+		<div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+			{statCards.map((stat) => <article class="rounded-2xl border border-line bg-white p-5 shadow-[0_4px_20px_rgba(23,34,31,0.03)]"><div class="mb-7 flex items-start justify-between"><p class="text-sm font-medium text-muted">{stat.label}</p><span class:list={["grid h-9 w-9 place-items-center rounded-xl text-lg font-bold", stat.tone === 'forest' && 'bg-mint text-forest', stat.tone === 'coral' && 'bg-[#fff0eb] text-coral', stat.tone === 'sun' && 'bg-[#fff6da] text-[#9a7419]', stat.tone === 'slate' && 'bg-[#edf1f0] text-ink']}>{stat.icon}</span></div><p class="font-display text-2xl font-bold tracking-tight text-ink">{stat.value}</p><div class="mt-2 flex items-center gap-2 text-xs"><span class:list={["font-bold", stat.tone === 'coral' ? 'text-coral' : 'text-forest']}>{stat.change}</span><span class="text-muted">{stat.note}</span></div></article>)}
+		</div>
+
+		<div class="mt-6 grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+			<section class="rounded-2xl border border-line bg-white p-5 sm:p-6">
+				<div class="mb-7 flex items-start justify-between"><div><h3 class="font-display text-lg font-bold text-ink">Rendimiento de ventas</h3><p class="mt-1 text-xs text-muted">Ingresos de los últimos 7 días</p></div><span class="rounded-lg bg-mint px-2.5 py-1 text-xs font-bold text-forest">+18.4%</span></div>
+				<div class="flex h-52 items-end gap-2 sm:gap-4">{salesByDay.map((value, index) => <div class="group flex h-full flex-1 flex-col items-center justify-end gap-2"><div class:list={["relative w-full max-w-12 rounded-t-lg transition-all group-hover:bg-forest", index === 5 ? 'bg-forest' : 'bg-[#b9dfc3']} style={`height: ${value}%`}><span class="absolute -top-7 left-1/2 hidden -translate-x-1/2 rounded-md bg-ink px-2 py-1 text-[10px] font-bold text-white group-hover:block">${value * 100}</span></div><span class="text-[11px] text-muted">{weekdays[index]}</span></div>)}</div>
+			</section>
+			<section class="rounded-2xl border border-line bg-ink p-5 text-white sm:p-6"><div class="mb-6 flex items-start justify-between"><div><p class="text-xs font-bold uppercase tracking-[0.16em] text-[#9acfa8]">Seguimiento</p><h3 class="mt-2 font-display text-lg font-bold">Cuentas por cobrar</h3></div><a class="text-xs font-bold text-[#b9dfc3] hover:text-white" href="/credito">Ver todo →</a></div><div class="mb-6"><p class="font-display text-3xl font-bold">{formatCurrency(dashboardStats.receivables)}</p><div class="mt-2 flex items-center gap-2 text-xs text-[#aabcb4]"><span class="h-2 w-2 rounded-full bg-coral"></span> 3 clientes en mora</div></div><div class="space-y-4">{customers.slice(0, 3).map((customer) => <div class="flex items-center gap-3"><div class="grid h-9 w-9 shrink-0 place-items-center rounded-full bg-white/10 text-xs font-bold text-mint">{customer.initials}</div><div class="min-w-0 flex-1"><p class="truncate text-sm font-bold">{customer.name}</p><p class="text-xs text-[#aabcb4]">{customer.status === 'En mora' ? `${customer.daysOverdue} días de mora` : 'Vence en 5 días'}</p></div><p class="text-sm font-bold">{formatCurrency(customer.balance)}</p></div>)}</div></section>
+		</div>
+
+		<div class="mt-6 grid gap-6 xl:grid-cols-[1.45fr_1fr]">
+			<section class="overflow-hidden rounded-2xl border border-line bg-white"><div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-5 sm:px-6"><div><h3 class="font-display text-lg font-bold text-ink">Ventas recientes</h3><p class="mt-1 text-xs text-muted">Últimos documentos emitidos</p></div><div class="flex gap-3"><label class="relative"><span class="sr-only">Buscar venta</span><input id="sale-search" type="search" placeholder="Buscar..." class="w-28 rounded-lg border border-line px-3 py-2 text-xs outline-none focus:border-forest sm:w-36" /></label><a class="self-center text-xs font-bold text-forest" href="/ventas">Ver todas →</a></div></div><div class="overflow-x-auto"><table class="w-full min-w-155 text-left"><thead class="bg-paper text-[10px] uppercase tracking-[0.15em] text-muted"><tr><th class="px-5 py-3 font-bold sm:px-6">Documento</th><th class="px-5 py-3 font-bold">Cliente</th><th class="px-5 py-3 font-bold">Fecha</th><th class="px-5 py-3 text-right font-bold">Total</th><th class="px-5 py-3 font-bold">Estado</th></tr></thead><tbody id="sales-table">{recentSales.map((sale) => <tr class="sale-row border-t border-line text-sm"><td class="px-5 py-4 font-bold text-ink sm:px-6">{sale.id}</td><td class="px-5 py-4 text-muted">{sale.customer}</td><td class="px-5 py-4 text-xs text-muted">{sale.date}</td><td class="px-5 py-4 text-right font-bold text-ink">{formatCurrency(sale.total)}</td><td class="px-5 py-4"><span class:list={["rounded-full px-2.5 py-1 text-[11px] font-bold", sale.status === 'Pagada' ? 'bg-mint text-forest' : sale.status === 'Vencida' ? 'bg-[#fff0eb] text-coral' : 'bg-[#fff6da] text-[#9a7419]']}>{sale.status}</span></td></tr>)}</tbody></table></div></section>
+			<section class="rounded-2xl border border-line bg-white p-5 sm:p-6"><div class="mb-5 flex items-start justify-between"><div><h3 class="font-display text-lg font-bold text-ink">Stock bajo</h3><p class="mt-1 text-xs text-muted">Productos que requieren reposición</p></div><a href="/compras" class="text-xs font-bold text-forest">Gestionar →</a></div><div class="space-y-5">{lowStockProducts.map((product) => <div><div class="mb-2 flex justify-between gap-3 text-sm"><span class="font-bold text-ink">{product.name}</span><span class="shrink-0 text-xs font-bold text-coral">{product.stock} / {product.minimumStock}</span></div><div class="h-2 overflow-hidden rounded-full bg-[#edf1ee]"><div class="h-full rounded-full bg-coral" style={`width: ${(product.stock / product.minimumStock) * 100}%`}></div></div><p class="mt-1 text-[11px] text-muted">SKU {product.sku}</p></div>)}</div><a href="/compras" class="mt-7 block rounded-xl border border-line py-2.5 text-center text-xs font-bold text-ink transition hover:border-forest hover:text-forest">Crear orden de compra</a></section>
+		</div>
+
+		<div class="mt-6 flex flex-col gap-4 rounded-2xl border border-[#f0dca6] bg-[#fffaf0] p-5 sm:flex-row sm:items-center sm:justify-between sm:p-6"><div class="flex gap-4"><span class="grid h-10 w-10 shrink-0 place-items-center rounded-xl bg-sun text-lg font-bold text-ink">!</span><div><h3 class="font-display font-bold text-ink">Hay cuentas que necesitan atención</h3><p class="mt-1 text-sm text-muted">Comercial El Faro y Panadería La Espiga superan su fecha de pago.</p></div></div><a href="/credito" class="whitespace-nowrap rounded-xl bg-ink px-4 py-2.5 text-center text-xs font-bold text-white transition hover:bg-forest">Revisar cobranzas</a></div>
+	</section>
+</MainLayout>
+
+<script>
+	const searchInput = document.querySelector<HTMLInputElement>('#sale-search');
+	const rows = Array.from(document.querySelectorAll<HTMLElement>('.sale-row'));
+	searchInput?.addEventListener('input', (event) => {
+		const query = (event.target as HTMLInputElement).value.toLowerCase();
+		rows.forEach((row) => { row.hidden = !row.textContent?.toLowerCase().includes(query); });
+	});
+</script>

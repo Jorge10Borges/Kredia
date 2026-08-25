@@ -1,0 +1,51 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+import { formatCurrency, purchaseAccounts } from '../../data/mock';
+
+const view = Astro.params.view ?? 'estado-de-cuenta';
+const isAlerts = view === 'alertas';
+const accounts = isAlerts ? purchaseAccounts.filter((account) => account.status === 'Vencida') : purchaseAccounts;
+const total = accounts.reduce((sum, account) => sum + account.total, 0);
+const paid = accounts.reduce((sum, account) => sum + account.paid, 0);
+const balance = total - paid;
+
+export function getStaticPaths() {
+	return ['estado-de-cuenta', 'alertas'].map((view) => ({ params: { view } }));
+}
+---
+
+<MainLayout title={isAlerts ? 'Alertas de compras' : 'Estado de cuenta de compras'}>
+	<section class="mx-auto w-full max-w-3xl space-y-6 px-4 pb-4 pt-5 sm:px-6 md:max-w-none md:px-8 md:pt-8">
+		<div class="flex flex-col justify-between gap-5 md:flex-row md:items-end">
+			<div>
+				<a href="/compras" class="mb-4 inline-flex items-center gap-1 text-xs font-bold text-secondary hover:underline"><span class="material-symbols-outlined text-[17px]">arrow_back</span>Volver a compras</a>
+				<p class="mb-2 text-label-caps text-secondary">{isAlerts ? 'Seguimiento urgente' : 'Cuentas por pagar'}</p>
+				<h2 class="font-display text-3xl font-bold tracking-tight text-primary sm:text-4xl">{isAlerts ? 'Alertas de compras' : 'Estado de cuenta'}</h2>
+				<p class="mt-2 max-w-xl text-sm leading-6 text-on-surface-variant">{isAlerts ? 'Cuentas por pagar cuyo periodo de crédito ya venció.' : 'Detalle de facturas de compra, pagos aplicados y saldo pendiente por proveedor.'}</p>
+			</div>
+			<button id="export-button" class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary px-4 py-3 text-sm font-bold text-white transition-opacity hover:opacity-80"><span class="material-symbols-outlined text-[19px]">download</span>Exportar CSV</button>
+		</div>
+
+		{isAlerts && <div class="flex items-start gap-3 rounded-xl border border-error bg-error-container px-4 py-4 text-on-error-container"><span class="material-symbols-outlined">warning</span><div><p class="font-bold">{accounts.length} cuentas vencidas requieren atención</p><p class="mt-1 text-sm">El periodo de crédito acordado con estos proveedores ya terminó.</p></div></div>}
+
+		<div class="grid gap-4 sm:grid-cols-3">
+			<div class="rounded-xl border border-surface-variant bg-surface-container-lowest p-4"><p class="text-sm text-on-surface-variant">Facturas {isAlerts ? 'vencidas' : 'registradas'}</p><p class="mt-3 text-display-md font-bold text-primary">{accounts.length}</p></div>
+			<div class="rounded-xl border border-surface-variant bg-surface-container-lowest p-4"><p class="text-sm text-on-surface-variant">Total comprado</p><p class="mt-3 text-display-md font-bold text-primary">{formatCurrency(total)}</p></div>
+			<div class="rounded-xl border border-surface-variant bg-surface-container-lowest p-4"><p class="text-sm text-on-surface-variant">Saldo por pagar</p><p class="mt-3 text-display-md font-bold text-error">{formatCurrency(balance)}</p></div>
+		</div>
+
+		<section class="overflow-hidden rounded-xl border border-surface-variant bg-surface-container-lowest">
+			<div class="flex flex-wrap items-center justify-between gap-3 border-b border-surface-variant px-4 py-4 sm:px-5"><div><h3 class="text-headline-sm font-bold text-primary">{isAlerts ? 'Obligaciones vencidas' : 'Detalle de compras a crédito'}</h3><p class="mt-1 text-xs text-on-surface-variant">Actualizado hoy, 25 de agosto de 2026</p></div><select class="rounded-lg border border-outline-variant bg-surface px-3 py-2 text-xs font-semibold text-primary" aria-label="Filtrar estado"><option>{isAlerts ? 'Solo vencidas' : 'Todos los estados'}</option><option>Pagadas</option><option>Pendientes</option><option>Vencidas</option></select></div>
+			<div class="overflow-x-auto"><table class="w-full min-w-[760px] text-left"><thead class="bg-surface-container-low text-label-caps text-on-surface-variant"><tr><th class="px-4 py-3 font-semibold sm:px-5">Proveedor / documento</th><th class="px-4 py-3 font-semibold">Emisión</th><th class="px-4 py-3 font-semibold">Vencimiento</th><th class="px-4 py-3 text-right font-semibold">Total</th><th class="px-4 py-3 text-right font-semibold">Pagado</th><th class="px-4 py-3 text-right font-semibold">Saldo</th><th class="px-4 py-3 font-semibold">Estado</th></tr></thead><tbody>{accounts.map((account) => <tr class="border-t border-surface-variant text-sm"><td class="px-4 py-4 sm:px-5"><p class="font-bold text-primary">{account.supplier}</p><p class="mt-1 text-xs text-on-surface-variant">{account.id}</p></td><td class="px-4 py-4 text-on-surface-variant">{account.issueDate}</td><td class="px-4 py-4 text-on-surface-variant">{account.dueDate}{account.daysOverdue > 0 && <span class="mt-1 block text-xs font-bold text-error">{account.daysOverdue} días de mora</span>}</td><td class="px-4 py-4 text-right font-semibold text-primary">{formatCurrency(account.total)}</td><td class="px-4 py-4 text-right text-on-surface-variant">{formatCurrency(account.paid)}</td><td class="px-4 py-4 text-right font-bold text-primary">{formatCurrency(account.total - account.paid)}</td><td class="px-4 py-4"><span class:list={["rounded-full px-2.5 py-1 text-[11px] font-bold", account.status === 'Vencida' ? 'bg-error-container text-on-error-container' : account.status === 'Pagada' ? 'bg-secondary-container text-on-secondary-container' : 'bg-tertiary-fixed text-on-tertiary-fixed']}>{account.status}</span></td></tr>)}</tbody></table></div>
+		</section>
+	</section>
+</MainLayout>
+
+<script>
+	document.querySelector('#export-button')?.addEventListener('click', () => {
+		const link = document.createElement('a');
+		link.href = 'data:text/csv;charset=utf-8,Proveedor,Documento,Total,Pagado,Saldo%0AEstado mock,OC-00124,1840,840,1000';
+		link.download = 'estado-cuenta-compras.csv';
+		link.click();
+	});
+</script>

@@ -1,0 +1,58 @@
+---
+import '../styles/global.css';
+interface Props {
+	title?: string;
+}
+
+const { title = 'Panel principal' } = Astro.props;
+const currentPath = Astro.url.pathname;
+const navigation = [
+	{ label: 'Dashboard', href: '/', icon: '⌂' },
+	{ label: 'Ventas', href: '/ventas', icon: '↗' },
+	{ label: 'Compras', href: '/compras', icon: '↙' },
+	{ label: 'Clientes', href: '/clientes', icon: '◌' },
+	{ label: 'Proveedores', href: '/proveedores', icon: '▤' },
+	{ label: 'Crédito', href: '/credito', icon: '◒' },
+	{ label: 'Caja', href: '/caja', icon: '$' },
+	{ label: 'Reportes', href: '/reportes', icon: '▥' },
+];
+---
+
+<div class="min-h-screen bg-paper lg:flex">
+	<aside class="desktop-sidebar w-64 shrink-0 flex-col border-r border-line bg-white">
+		<div class="flex h-24 items-center gap-3 border-b border-line px-7">
+			<div class="grid h-10 w-10 place-items-center rounded-xl bg-forest font-display text-xl font-bold text-white">K</div>
+			<div>
+				<p class="font-display text-lg font-bold tracking-tight text-ink">kredia</p>
+				<p class="text-[11px] uppercase tracking-[0.18em] text-muted">gestión simple</p>
+			</div>
+		</div>
+		<nav class="flex-1 space-y-1 px-4 py-7" aria-label="Navegación principal">
+			<p class="mb-3 px-3 text-[10px] font-bold uppercase tracking-[0.2em] text-muted">Menú principal</p>
+			{navigation.map((item) => (
+				<a href={item.href} class:list={["group flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-medium transition", currentPath === item.href ? "bg-mint text-forest" : "text-muted hover:bg-paper hover:text-ink"]}>
+					<span class="grid h-7 w-7 place-items-center rounded-lg bg-white/70 font-display text-base font-bold group-hover:bg-white">{item.icon}</span>
+					{item.label}
+				</a>
+			))}
+		</nav>
+		<div class="border-t border-line p-4">
+			<div class="flex items-center gap-3 rounded-xl bg-paper p-3">
+				<div class="grid h-9 w-9 place-items-center rounded-full bg-sun font-bold text-ink">JG</div>
+				<div class="min-w-0"><p class="truncate text-sm font-bold text-ink">Jorge García</p><p class="text-xs text-muted">Administrador</p></div>
+			</div>
+		</div>
+	</aside>
+
+	<main class="min-w-0 flex-1">
+		<header class="flex h-20 items-center justify-between border-b border-line bg-white px-5 sm:px-8">
+			<div class="flex items-center gap-3">
+				<div class="grid h-9 w-9 place-items-center rounded-lg bg-forest font-display font-bold text-white lg:hidden">K</div>
+				<div><p class="text-xs text-muted">Martes, 25 de agosto de 2026</p><h1 class="font-display text-lg font-bold text-ink">{title}</h1></div>
+			</div>
+			<div class="flex items-center gap-3"><button class="relative grid h-10 w-10 place-items-center rounded-xl border border-line text-lg text-muted" aria-label="Notificaciones">♧<span class="absolute right-2 top-2 h-1.5 w-1.5 rounded-full bg-coral"></span></button><div class="hidden h-8 w-px bg-line sm:block"></div><span class="hidden text-sm font-medium text-ink sm:block">Sucursal principal</span></div>
+		</header>
+		<div class="min-w-0 overflow-hidden border-b border-line bg-white px-5 py-3 lg:hidden"><div class="flex w-full gap-2 overflow-x-auto">{navigation.map((item) => <a href={item.href} class:list={["whitespace-nowrap rounded-lg px-3 py-2 text-xs font-bold", currentPath === item.href ? "bg-mint text-forest" : "text-muted"]}>{item.label}</a>)}</div></div>
+		<slot />
+	</main>
+</div>
