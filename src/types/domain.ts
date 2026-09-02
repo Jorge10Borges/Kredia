@@ -2,7 +2,7 @@ export type PaymentMethod = 'Efectivo' | 'Transferencia' | 'Pago móvil' | 'Divi
 export type PaymentStatus = 'Pagada' | 'Pendiente' | 'Vencida';
 
 export interface Customer {
-	id: number;
+	id: string | number;
 	name: string;
 	initials: string;
 	phone: string;
