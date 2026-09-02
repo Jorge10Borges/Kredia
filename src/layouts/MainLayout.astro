@@ -34,7 +34,7 @@ const navigation = [
 	</header>
 
 	<div class="mx-auto flex w-full max-w-7xl">
-		<aside class="main-sidebar hidden w-64 shrink-0 border-r border-outline-variant bg-surface-container-lowest px-4 py-6 md:flex md:flex-col">
+		<aside class="main-sidebar hidden w-64 shrink-0 border-r border-outline-variant bg-surface-container-lowest px-4 py-6 md:sticky md:top-14 md:h-[calc(100vh-3.5rem)] md:self-start md:overflow-y-auto md:flex md:flex-col">
 			<p class="mb-3 px-3 text-label-caps text-on-surface-variant">Módulos</p>
 			<nav class="space-y-1" aria-label="Navegación principal">
 				{navigation.map((item) => <a href={item.href} class:list={["flex items-center gap-3 rounded-lg px-3 py-3 text-body-md font-semibold transition-colors", currentPath === item.href ? "bg-secondary-container text-on-secondary-container" : "text-on-surface-variant hover:bg-surface-container-low hover:text-primary"]}><span class="material-symbols-outlined text-[21px]">{item.icon}</span>{item.label}</a>)}
