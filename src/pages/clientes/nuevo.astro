@@ -21,17 +21,18 @@ import MainLayout from "../../layouts/MainLayout.astro";
     </div>
 
     <form id="customer-form" class="space-y-6" novalidate>
+      <p class="text-xs text-muted">Los campos marcados con <span class="font-bold text-coral" aria-hidden="true">*</span><span class="sr-only"> asterisco</span> son obligatorios.</p>
       <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <legend class="px-1 font-display text-lg font-bold text-ink">Datos del cliente</legend><div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label class="text-sm font-bold text-ink"
-            >Tipo de persona<select
+            >Tipo de persona <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><select
               name="tipoPersona"
               required
               class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
               ><option value="natural">Natural</option><option value="juridica">Jurídica</option></select
             ></label
           ><label class="text-sm font-bold text-ink"
-            >Nombre o razón social<input
+            >Nombre o razón social <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="nombre"
               required
               maxlength="200"
@@ -44,7 +45,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
               class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
             /></label
           ><label class="text-sm font-bold text-ink"
-            >Tipo de documento<select
+            >Tipo de documento <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><select
               name="tipoDocumento"
               required
               class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
@@ -53,21 +54,21 @@ import MainLayout from "../../layouts/MainLayout.astro";
               ></select
             ></label
           ><label class="text-sm font-bold text-ink"
-            >Número de documento<input
+            >Número de documento <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="numeroDocumento"
               required
               maxlength="40"
               class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
             /></label
           ><label class="text-sm font-bold text-ink"
-            >Estado<select
+            >Estado <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><select
               name="estado"
               required
               class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
               ><option value="activo">Activo</option><option value="inactivo">Inactivo</option><option value="bloqueado">Bloqueado</option></select
             ></label
           ><label class="text-sm font-bold text-ink"
-            >Teléfono principal<input
+            >Teléfono principal <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="telefonoPrincipal"
               required
               type="tel"
@@ -94,7 +95,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
       <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <legend class="px-1 font-display text-lg font-bold text-ink">Ubicación y contacto</legend><div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label class="text-sm font-bold text-ink sm:col-span-2 lg:col-span-3"
-            >Dirección fiscal<textarea
+            >Dirección fiscal <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><textarea
               name="direccionFiscal"
               required
               rows="2"
@@ -113,7 +114,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
               class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
             /></label
           ><label class="text-sm font-bold text-ink"
-            >País<input
+            >País <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="pais"
               value="Venezuela"
               required
@@ -152,7 +153,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
       <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <legend class="px-1 font-display text-lg font-bold text-ink">Crédito y cobranza</legend><div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
           <label class="text-sm font-bold text-ink"
-            >Límite de crédito<input
+            >Límite de crédito <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="limiteCredito"
               required
               type="number"
@@ -162,7 +163,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
               class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
             /></label
           ><label class="text-sm font-bold text-ink"
-            >Días de crédito<input
+            >Días de crédito <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><input
               name="diasCredito"
               required
               type="number"
@@ -173,7 +174,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
               class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
             /></label
           ><label class="text-sm font-bold text-ink"
-            >Estado del crédito<select
+            >Estado del crédito <span class="text-coral" aria-hidden="true">*</span><span class="sr-only">obligatorio</span><select
               name="estadoCredito"
               required
               class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest"
@@ -193,6 +194,7 @@ import MainLayout from "../../layouts/MainLayout.astro";
 </MainLayout>
 
 <script>
+  const apiBaseUrl = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/`;
   const form = document.querySelector<HTMLFormElement>("#customer-form");
   const feedback = document.querySelector<HTMLElement>("#form-feedback");
 
@@ -203,8 +205,17 @@ import MainLayout from "../../layouts/MainLayout.astro";
       return;
     }
     if (feedback) {
-      feedback.textContent = "Los datos están listos para guardar. La conexión de guardado se habilitará al activar el backend SSR.";
-      feedback.className = "rounded-xl border border-[#b9dfc3] bg-mint px-4 py-3 text-sm font-bold text-forest";
+      const data = Object.fromEntries(new FormData(form));
+      fetch(`${apiBaseUrl}api/clientes.php`, { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify(data) })
+        .then(async (response) => ({ ok: response.ok, data: await response.json().catch(() => ({})) }))
+        .then(({ ok, data }) => {
+          if (!ok) throw new Error(data.message ?? "No fue posible guardar el cliente.");
+          window.location.assign("/clientes");
+        })
+        .catch((error: Error) => {
+          feedback.textContent = error.message;
+          feedback.className = "rounded-xl border border-[#ffdad6] bg-[#fff0eb] px-4 py-3 text-sm font-bold text-coral";
+        });
     }
   });
 </script>

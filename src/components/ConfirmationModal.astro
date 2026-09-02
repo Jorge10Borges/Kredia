@@ -1,0 +1,29 @@
+<dialog id="confirmation-modal" class="w-[calc(100%-2rem)] max-w-md rounded-xl border border-line bg-white p-0 text-ink shadow-2xl backdrop:bg-black/40">
+	<form method="dialog" class="p-6">
+		<div class="flex items-start gap-3"><span class="material-symbols-outlined grid h-10 w-10 shrink-0 place-items-center rounded-lg bg-[#fff0eb] text-coral">delete</span><div><h2 id="confirmation-modal-title" class="font-display text-lg font-bold">Confirmar eliminación</h2><p id="confirmation-modal-description" class="mt-2 text-sm leading-6 text-muted">Esta acción no se puede deshacer.</p></div></div>
+		<div class="mt-6 flex justify-end gap-3"><button value="cancel" class="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink transition hover:border-forest hover:text-forest">Cancelar</button><button id="confirmation-modal-confirm" value="confirm" class="rounded-lg bg-coral px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#93000a]">Eliminar</button></div>
+	</form>
+</dialog>
+
+<script>
+	const modal = document.querySelector<HTMLDialogElement>('#confirmation-modal');
+	const title = document.querySelector<HTMLElement>('#confirmation-modal-title');
+	const description = document.querySelector<HTMLElement>('#confirmation-modal-description');
+	const confirmButton = document.querySelector<HTMLButtonElement>('#confirmation-modal-confirm');
+	let confirmationDetail: Record<string, string> = {};
+
+	document.addEventListener('click', (event) => {
+		const trigger = (event.target as Element).closest<HTMLElement>('[data-confirm-delete]');
+		if (!trigger || !modal) return;
+
+		confirmationDetail = { id: trigger.dataset.customerId ?? '', name: trigger.dataset.customerName ?? '' };
+		if (title) title.textContent = trigger.dataset.confirmTitle ?? 'Confirmar eliminación';
+		if (description) description.textContent = trigger.dataset.confirmDescription ?? 'Esta acción no se puede deshacer.';
+		if (confirmButton) confirmButton.textContent = trigger.dataset.confirmAction ?? 'Eliminar';
+		modal.showModal();
+	});
+
+	modal?.addEventListener('close', () => {
+		if (modal.returnValue === 'confirm') document.dispatchEvent(new CustomEvent('confirmation-modal:confirm', { detail: confirmationDetail }));
+	});
+</script>
