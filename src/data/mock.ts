@@ -27,6 +27,12 @@ export const lowStockProducts: Product[] = [
 	{ id: 'PR-03', name: 'Harina de trigo 1kg', sku: 'HAR-008', stock: 6, minimumStock: 15, price: 1.85 },
 ];
 
+export const topProfitProducts = [
+	{ id: 'PR-17', name: 'Café molido premium 250g', sku: 'CAF-017', margin: 42, profit: 5.88 },
+	{ id: 'PR-24', name: 'Salsa de tomate artesanal', sku: 'SAL-024', margin: 38, profit: 2.66 },
+	{ id: 'PR-09', name: 'Detergente líquido 1L', sku: 'DET-009', margin: 34, profit: 2.04 },
+];
+
 export const salesByDay = [65, 42, 78, 55, 91, 68, 84];
 
 export const purchaseAccounts: PurchaseAccount[] = [
