@@ -1,19 +1,22 @@
 ---
 import MainLayout from '../../layouts/MainLayout.astro';
+
+const isEditing = Boolean(Astro.url.searchParams.get('id'));
+const pageTitle = isEditing ? 'Editar proveedor' : 'Nuevo proveedor';
 ---
 
-<MainLayout title="Nuevo proveedor">
+<MainLayout title={pageTitle}>
   <section class="mx-auto w-full max-w-5xl px-4 pb-8 pt-5 sm:px-6 md:px-8 md:pt-8">
     <div class="sticky top-14 z-40 -mx-4 mb-8 flex flex-col justify-between gap-5 border-b border-outline-variant bg-surface px-4 py-4 sm:-mx-6 sm:flex-row sm:items-end sm:px-6 md:-mx-8 md:px-8">
       <div>
         <a href="/proveedores" class="inline-flex items-center gap-1 text-xs font-bold text-forest hover:text-[#164737]"><span class="material-symbols-outlined text-base">arrow_back</span>Proveedores</a>
         <p class="mb-2 mt-4 text-xs font-bold uppercase tracking-[0.2em] text-forest">Directorio de abastecimiento</p>
-        <h2 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Nuevo proveedor</h2>
+        <h2 id="supplier-page-title" class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">{pageTitle}</h2>
         <p class="mt-2 text-sm leading-6 text-muted">Registra la información necesaria para gestionar tus compras y cuentas por pagar.</p>
       </div>
       <div class="flex gap-3">
         <a href="/proveedores" class="rounded-xl border border-line px-4 py-2.5 text-sm font-bold text-ink transition hover:border-forest hover:text-forest">Cancelar</a>
-        <button form="supplier-form" type="submit" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#164737]">Guardar proveedor</button>
+        <button id="supplier-save-top" form="supplier-form" type="submit" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white transition hover:bg-[#164737]">{isEditing ? 'Actualizar proveedor' : 'Guardar proveedor'}</button>
       </div>
     </div>
 
@@ -40,6 +43,14 @@ import MainLayout from '../../layouts/MainLayout.astro';
   const apiBaseUrl = `${import.meta.env.BASE_URL.replace(/\/$/, "")}/`;
   const form = document.querySelector<HTMLFormElement>('#supplier-form');
   const feedback = document.querySelector<HTMLElement>('#form-feedback');
+  const editId = new URLSearchParams(window.location.search).get('id');
+  const setField = (name: string, value: unknown) => { const field = form?.elements.namedItem(name) as HTMLInputElement | null; if (field) field.value = String(value ?? ''); };
+
+  if (editId) {
+    fetch(`${apiBaseUrl}api/proveedores.php?id=${encodeURIComponent(editId)}`).then((response) => response.ok ? response.json() : Promise.reject()).then(({ supplier }) => {
+      setField('nombre', supplier.nombre); setField('identificacionFiscal', supplier.identificacion_fiscal); setField('estado', supplier.estado); setField('telefono', supplier.telefono); setField('email', supplier.email); setField('diasPlazo', supplier.dias_plazo); setField('direccion', supplier.direccion);
+    }).catch(() => { if (feedback) { feedback.textContent = 'No fue posible cargar el proveedor.'; feedback.className = 'rounded-xl border border-[#ffdad6] bg-[#fff0eb] px-4 py-3 text-sm font-bold text-coral'; } });
+  }
 
   form?.addEventListener('submit', (event) => {
     event.preventDefault();
@@ -49,7 +60,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
     }
 
     const data = Object.fromEntries(new FormData(form));
-    fetch(`${apiBaseUrl}api/proveedores.php`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
+    fetch(`${apiBaseUrl}api/proveedores.php${editId ? `?id=${encodeURIComponent(editId)}` : ''}`, { method: editId ? 'PUT' : 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) })
       .then(async (response) => ({ ok: response.ok, data: await response.json().catch(() => ({})) }))
       .then(({ ok, data }) => {
         if (!ok) throw new Error(data.message ?? 'No fue posible guardar el proveedor.');

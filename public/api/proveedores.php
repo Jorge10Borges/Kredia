@@ -17,6 +17,7 @@ try {
     $method = $_SERVER['REQUEST_METHOD'];
     if ($method === 'GET') listSuppliers($connection);
     if ($method === 'POST') createSupplier($connection);
+    if ($method === 'PUT') updateSupplier($connection);
     if ($method === 'DELETE') deleteSupplier($connection);
     respond(['message' => 'Método no permitido.'], 405);
 } catch (mysqli_sql_exception $error) {
@@ -25,10 +26,34 @@ try {
 }
 
 function listSuppliers(mysqli $connection): void {
+    if (isset($_GET['id'])) {
+        $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+        if (!$id) respond(['message' => 'Proveedor no válido.'], 400);
+        $statement = $connection->prepare('SELECT id, nombre, identificacion_fiscal, telefono, email, direccion, dias_plazo, estado FROM proveedores WHERE id = ? AND eliminado_en IS NULL');
+        $statement->bind_param('i', $id);
+        $statement->execute();
+        $result = $statement->get_result();
+        if ($result->num_rows === 0) respond(['message' => 'Proveedor no encontrado.'], 404);
+        respond(['supplier' => $result->fetch_assoc()]);
+    }
     $result = $connection->query("SELECT id, nombre, identificacion_fiscal, telefono, email, direccion, dias_plazo, estado, created_at, updated_at FROM proveedores WHERE eliminado_en IS NULL ORDER BY nombre ASC");
     $rows = $result->fetch_all(MYSQLI_ASSOC);
     $kpis = $connection->query("SELECT COUNT(*) AS total_suppliers, SUM(estado = 'activo') AS active_suppliers, MAX(updated_at) AS last_updated FROM proveedores WHERE eliminado_en IS NULL")->fetch_assoc();
     respond(['suppliers' => $rows, 'kpis' => $kpis]);
+}
+
+function updateSupplier(mysqli $connection): void {
+    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    $data = json_decode(file_get_contents('php://input'), true) ?: [];
+    foreach (['nombre', 'identificacionFiscal', 'diasPlazo', 'estado'] as $field) if (!isset($data[$field]) || trim((string) $data[$field]) === '') respond(['message' => "El campo $field es obligatorio."], 422);
+    if (!is_numeric($data['diasPlazo']) || (int) $data['diasPlazo'] < 0 || (int) $data['diasPlazo'] > 365) respond(['message' => 'Los días de plazo deben estar entre 0 y 365.'], 422);
+    if (!$id) respond(['message' => 'Proveedor no válido.'], 400);
+    $nombre = trim((string) $data['nombre']); $identificacionFiscal = trim((string) $data['identificacionFiscal']); $telefono = trim((string) ($data['telefono'] ?? '')); $email = trim((string) ($data['email'] ?? '')); $direccion = trim((string) ($data['direccion'] ?? '')); $diasPlazo = (int) $data['diasPlazo']; $estado = (string) $data['estado'];
+    $statement = $connection->prepare("UPDATE proveedores SET nombre = ?, identificacion_fiscal = ?, telefono = NULLIF(?, ''), email = NULLIF(?, ''), direccion = NULLIF(?, ''), dias_plazo = ?, estado = ? WHERE id = ? AND eliminado_en IS NULL");
+    $statement->bind_param('sssssisi', $nombre, $identificacionFiscal, $telefono, $email, $direccion, $diasPlazo, $estado, $id);
+    $statement->execute();
+    if ($statement->affected_rows === 0) respond(['message' => 'Proveedor no encontrado o sin cambios.'], 404);
+    respond(['id' => $id]);
 }
 
 function createSupplier(mysqli $connection): void {
