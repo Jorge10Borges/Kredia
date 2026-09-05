@@ -10,6 +10,7 @@ try {
     $method = $_SERVER['REQUEST_METHOD'];
     if ($method === 'GET') listOrders($connection);
     if ($method === 'POST') createOrder($connection);
+    if ($method === 'PUT') updateOrder($connection);
     if ($method === 'DELETE') deleteOrder($connection);
     respond(['message' => 'Método no permitido.'], 405);
 } catch (mysqli_sql_exception $error) {
@@ -25,7 +26,7 @@ function listOrders(mysqli $connection): void {
         $statement->bind_param('i', $id); $statement->execute(); $result = $statement->get_result();
         if ($result->num_rows === 0) respond(['message' => 'Pedido no encontrado.'], 404);
         $order = $result->fetch_assoc();
-        $details = $connection->prepare('SELECT d.producto_id, pr.nombre AS producto, d.cantidad, d.precio_unitario, d.descuento, d.subtotal FROM pedidos_detalle d INNER JOIN productos pr ON pr.id = d.producto_id WHERE d.pedido_id = ?');
+        $details = $connection->prepare('SELECT d.producto_id, pr.nombre AS producto, pr.lleva_iva, d.cantidad, d.precio_unitario, d.descuento, d.subtotal FROM pedidos_detalle d INNER JOIN productos pr ON pr.id = d.producto_id WHERE d.pedido_id = ?');
         $details->bind_param('i', $id); $details->execute(); $order['detalles'] = $details->get_result()->fetch_all(MYSQLI_ASSOC);
         respond(['order' => $order]);
     }
@@ -38,7 +39,7 @@ function listOrders(mysqli $connection): void {
 
 function createOrder(mysqli $connection): void {
     $data = json_decode(file_get_contents('php://input'), true) ?: [];
-    foreach (['clienteId', 'estado', 'detalles'] as $field) if (!isset($data[$field]) || $data[$field] === '' || ($field === 'detalles' && count($data[$field]) === 0)) respond(['message' => "El campo $field es obligatorio."], 422);
+    foreach (['clienteId', 'fechaEntrega', 'estado', 'detalles'] as $field) if (!isset($data[$field]) || $data[$field] === '' || ($field === 'detalles' && count($data[$field]) === 0)) respond(['message' => "El campo $field es obligatorio."], 422);
     if (!is_array($data['detalles'])) respond(['message' => 'El detalle del pedido no es válido.'], 422);
     $customerId = (string) $data['clienteId']; $date = $data['fechaEntrega'] ?: null; $state = (string) $data['estado']; $notes = trim((string) ($data['notas'] ?? '')); $subtotal = 0.0;
     $connection->begin_transaction();
@@ -56,6 +57,30 @@ function createOrder(mysqli $connection): void {
         $detailStatement = $connection->prepare('INSERT INTO pedidos_detalle (pedido_id, producto_id, cantidad, precio_unitario, descuento, subtotal) VALUES (?, ?, ?, ?, ?, ?)');
         foreach ($data['detalles'] as $detail) { $productId = (int) $detail['productoId']; $quantity = (float) $detail['cantidad']; $price = (float) $detail['precioUnitario']; $discount = (float) ($detail['descuento'] ?? 0); $lineTotal = ($quantity * $price) - $discount; $detailStatement->bind_param('iidddd', $orderId, $productId, $quantity, $price, $discount, $lineTotal); $detailStatement->execute(); }
         $connection->commit(); respond(['id' => $orderId], 201);
+    } catch (Throwable $error) { $connection->rollback(); throw $error; }
+}
+
+function updateOrder(mysqli $connection): void {
+    $id = filter_input(INPUT_GET, 'id', FILTER_VALIDATE_INT);
+    if (!$id) respond(['message' => 'Pedido no válido.'], 400);
+    $data = json_decode(file_get_contents('php://input'), true) ?: [];
+    foreach (['clienteId', 'fechaEntrega', 'estado', 'detalles'] as $field) if (!isset($data[$field]) || $data[$field] === '' || ($field === 'detalles' && count($data[$field]) === 0)) respond(['message' => "El campo $field es obligatorio."], 422);
+    if (!is_array($data['detalles'])) respond(['message' => 'El detalle del pedido no es válido.'], 422);
+    $customerId = (string) $data['clienteId']; $date = $data['fechaEntrega'] ?: null; $state = (string) $data['estado']; $notes = trim((string) ($data['notas'] ?? '')); $subtotal = 0.0;
+    $connection->begin_transaction();
+    try {
+        $checkOrder = $connection->prepare("SELECT id FROM pedidos WHERE id = ? AND eliminado_en IS NULL"); $checkOrder->bind_param('i', $id); $checkOrder->execute(); if ($checkOrder->get_result()->num_rows === 0) respond(['message' => 'Pedido no encontrado.'], 404);
+        $check = $connection->prepare("SELECT id FROM clientes WHERE id = ? AND eliminado_en IS NULL AND estado = 'activo'"); $check->bind_param('s', $customerId); $check->execute(); if ($check->get_result()->num_rows === 0) respond(['message' => 'El cliente no es válido.'], 422);
+        $productStatement = $connection->prepare("SELECT lleva_iva FROM productos WHERE id = ? AND estado = 'activo'");
+        $tax = 0.0;
+        foreach ($data['detalles'] as $detail) { $quantity = (float) ($detail['cantidad'] ?? 0); $price = (float) ($detail['precioUnitario'] ?? -1); $discount = (float) ($detail['descuento'] ?? 0); $productId = (int) ($detail['productoId'] ?? 0); if ($quantity <= 0 || $price < 0 || $discount < 0) respond(['message' => 'Las cantidades, precios y descuentos deben ser válidos.'], 422); $productStatement->bind_param('i', $productId); $productStatement->execute(); $product = $productStatement->get_result()->fetch_assoc(); if (!$product) respond(['message' => 'El producto elegido no está disponible.'], 422); $lineSubtotal = ($quantity * $price) - $discount; $subtotal += $lineSubtotal; if ((int) $product['lleva_iva'] === 1) $tax += $lineSubtotal * 0.16; }
+        if ($subtotal < 0) respond(['message' => 'El total del pedido no puede ser negativo.'], 422);
+        $tax = round($tax, 2); $total = $subtotal + $tax;
+        $order = $connection->prepare("UPDATE pedidos SET cliente_id = ?, fecha_entrega = ?, estado = ?, notas = NULLIF(?, ''), subtotal = ?, impuesto = ?, total = ?, actualizado_en = NOW() WHERE id = ? AND eliminado_en IS NULL"); $order->bind_param('ssssdddi', $customerId, $date, $state, $notes, $subtotal, $tax, $total, $id); $order->execute();
+        $deleteDetails = $connection->prepare("DELETE FROM pedidos_detalle WHERE pedido_id = ?"); $deleteDetails->bind_param('i', $id); $deleteDetails->execute();
+        $detailStatement = $connection->prepare('INSERT INTO pedidos_detalle (pedido_id, producto_id, cantidad, precio_unitario, descuento, subtotal) VALUES (?, ?, ?, ?, ?, ?)');
+        foreach ($data['detalles'] as $detail) { $productId = (int) $detail['productoId']; $quantity = (float) $detail['cantidad']; $price = (float) $detail['precioUnitario']; $discount = (float) ($detail['descuento'] ?? 0); $lineTotal = ($quantity * $price) - $discount; $detailStatement->bind_param('iidddd', $id, $productId, $quantity, $price, $discount, $lineTotal); $detailStatement->execute(); }
+        $connection->commit(); respond(['id' => $id, 'message' => 'Pedido actualizado con éxito.'], 200);
     } catch (Throwable $error) { $connection->rollback(); throw $error; }
 }
 

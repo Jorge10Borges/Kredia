@@ -15,7 +15,7 @@ const modules: Record<string, { title: string; eyebrow: string; description: str
 	reportes: { title: 'Reportes', eyebrow: 'Información para decidir', description: 'Convierte tus operaciones en una lectura clara del negocio.', primary: 'Exportar CSV' },
 };
 export function getStaticPaths() {
-	return ['ventas', 'compras', 'clientes', 'proveedores', 'credito', 'caja', 'reportes'].map((module) => ({ params: { module } }));
+	return ['ventas', 'clientes', 'proveedores', 'credito', 'caja', 'reportes'].map((module) => ({ params: { module } }));
 }
 const page = modules[moduleKey] ?? modules.ventas;
 const isCredit = moduleKey === 'credito';
