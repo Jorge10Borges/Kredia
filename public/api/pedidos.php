@@ -25,13 +25,13 @@ function listOrders(mysqli $connection): void {
         $statement->bind_param('i', $id); $statement->execute(); $result = $statement->get_result();
         if ($result->num_rows === 0) respond(['message' => 'Pedido no encontrado.'], 404);
         $order = $result->fetch_assoc();
-        $details = $connection->prepare('SELECT d.producto_id, pr.nombre AS producto, pr.sku, d.cantidad, d.precio_unitario, d.descuento, d.subtotal FROM pedidos_detalle d INNER JOIN productos pr ON pr.id = d.producto_id WHERE d.pedido_id = ?');
+        $details = $connection->prepare('SELECT d.producto_id, pr.nombre AS producto, d.cantidad, d.precio_unitario, d.descuento, d.subtotal FROM pedidos_detalle d INNER JOIN productos pr ON pr.id = d.producto_id WHERE d.pedido_id = ?');
         $details->bind_param('i', $id); $details->execute(); $order['detalles'] = $details->get_result()->fetch_all(MYSQLI_ASSOC);
         respond(['order' => $order]);
     }
     $orders = $connection->query("SELECT p.id, p.numero_pedido, c.nombre AS cliente, p.fecha_pedido, p.fecha_entrega, p.estado, p.total FROM pedidos p INNER JOIN clientes c ON c.id = p.cliente_id WHERE p.eliminado_en IS NULL AND c.eliminado_en IS NULL ORDER BY p.fecha_pedido DESC, p.id DESC")->fetch_all(MYSQLI_ASSOC);
     $customers = $connection->query("SELECT id, nombre FROM clientes WHERE eliminado_en IS NULL AND estado = 'activo' ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
-    $products = $connection->query("SELECT id, nombre, sku, precio_venta FROM productos WHERE estado = 'activo' ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
+    $products = $connection->query("SELECT id, nombre, precio_venta, lleva_iva FROM productos WHERE estado = 'activo' ORDER BY nombre")->fetch_all(MYSQLI_ASSOC);
     $kpis = $connection->query("SELECT COUNT(*) AS total_orders, COALESCE(SUM(estado IN ('pendiente','confirmado','preparando','enviado')), 0) AS open_orders, COALESCE(SUM(total), 0) AS total_value FROM pedidos WHERE eliminado_en IS NULL")->fetch_assoc();
     respond(['orders' => $orders, 'customers' => $customers, 'products' => $products, 'kpis' => $kpis]);
 }
@@ -44,9 +44,11 @@ function createOrder(mysqli $connection): void {
     $connection->begin_transaction();
     try {
         $check = $connection->prepare("SELECT id FROM clientes WHERE id = ? AND eliminado_en IS NULL AND estado = 'activo'"); $check->bind_param('s', $customerId); $check->execute(); if ($check->get_result()->num_rows === 0) respond(['message' => 'El cliente no es válido.'], 422);
-        foreach ($data['detalles'] as $detail) { $quantity = (float) ($detail['cantidad'] ?? 0); $discount = (float) ($detail['descuento'] ?? 0); if ($quantity <= 0 || $discount < 0) respond(['message' => 'Las cantidades y descuentos deben ser válidos.'], 422); $productId = (int) ($detail['productoId'] ?? 0); $price = (float) ($detail['precioUnitario'] ?? 0); $subtotal += ($quantity * $price) - $discount; }
+        $productStatement = $connection->prepare("SELECT lleva_iva FROM productos WHERE id = ? AND estado = 'activo'");
+        $tax = 0.0;
+        foreach ($data['detalles'] as $detail) { $quantity = (float) ($detail['cantidad'] ?? 0); $price = (float) ($detail['precioUnitario'] ?? -1); $discount = (float) ($detail['descuento'] ?? 0); $productId = (int) ($detail['productoId'] ?? 0); if ($quantity <= 0 || $price < 0 || $discount < 0) respond(['message' => 'Las cantidades, precios y descuentos deben ser válidos.'], 422); $productStatement->bind_param('i', $productId); $productStatement->execute(); $product = $productStatement->get_result()->fetch_assoc(); if (!$product) respond(['message' => 'El producto elegido no está disponible.'], 422); $lineSubtotal = ($quantity * $price) - $discount; $subtotal += $lineSubtotal; if ((int) $product['lleva_iva'] === 1) $tax += $lineSubtotal * 0.16; }
         if ($subtotal < 0) respond(['message' => 'El total del pedido no puede ser negativo.'], 422);
-        $tax = round($subtotal * 0.16, 2); $total = $subtotal + $tax;
+        $tax = round($tax, 2); $total = $subtotal + $tax;
         $temporaryNumber = 'TMP-' . bin2hex(random_bytes(8));
         $order = $connection->prepare('INSERT INTO pedidos (cliente_id, numero_pedido, fecha_entrega, estado, notas, subtotal, impuesto, total) VALUES (?, ?, ?, ?, NULLIF(?, \'\'), ?, ?, ?)'); $order->bind_param('sssssddd', $customerId, $temporaryNumber, $date, $state, $notes, $subtotal, $tax, $total); $order->execute(); $orderId = $connection->insert_id;
         $number = 'PED-' . str_pad((string) $orderId, 5, '0', STR_PAD_LEFT);
