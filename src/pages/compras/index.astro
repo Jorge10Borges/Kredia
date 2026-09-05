@@ -4,7 +4,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
 <MainLayout title="Compras">
   <section class="mx-auto w-full max-w-6xl space-y-6 px-4 pb-8 pt-5 sm:px-6 md:px-8 md:pt-8">
-    <div class="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-forest">Abastecimiento por demanda</p><h2 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Compras</h2><p class="mt-2 max-w-xl text-sm leading-6 text-muted">Planifica las compras necesarias para cubrir los pedidos de tus clientes.</p></div><button type="button" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white">Registrar compra</button></div>
+    <div class="flex flex-col justify-between gap-5 md:flex-row md:items-end"><div><p class="mb-2 text-xs font-bold uppercase tracking-[0.2em] text-forest">Abastecimiento por demanda</p><h2 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Compras</h2><p class="mt-2 max-w-xl text-sm leading-6 text-muted">Planifica las compras necesarias para cubrir los pedidos de tus clientes.</p></div><div class="flex flex-wrap items-center gap-3"><label class="flex items-center gap-2 rounded-xl border border-line bg-white px-3 py-2.5 text-xs font-bold text-ink"><span class="text-muted">Fecha de entrega:</span><input id="global-date-filter" type="date" aria-label="Filtrar por fecha de entrega" class="bg-transparent font-bold text-ink outline-none" /></label><button type="button" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white">Registrar compra</button></div></div>
     <div class="grid gap-4 sm:grid-cols-2 xl:grid-cols-4"><article class="rounded-2xl border border-line bg-white p-5"><p class="text-sm text-muted">Pedidos por abastecer</p><p id="pending-orders" class="mt-4 font-display text-2xl font-bold text-ink">-</p><p class="mt-2 text-xs text-muted">En preparación</p></article><article class="rounded-2xl border border-line bg-white p-5"><p class="text-sm text-muted">Productos por comprar</p><p id="products-to-buy" class="mt-4 font-display text-2xl font-bold text-ink">-</p><p class="mt-2 text-xs text-muted">Con faltante</p></article><article class="rounded-2xl border border-line bg-white p-5"><p class="text-sm text-muted">Cobertura de pedidos</p><p id="orders-coverage" class="mt-4 font-display text-2xl font-bold text-forest">-</p><p class="mt-2 text-xs text-muted">Demanda ya asignada</p></article><article class="rounded-2xl border border-line bg-white p-5"><p class="text-sm text-muted">Compras realizadas</p><p id="purchases-value" class="mt-4 font-display text-2xl font-bold text-ink">-</p><p class="mt-2 text-xs text-muted">Documentos vigentes</p></article></div>
     <section class="overflow-hidden rounded-2xl border border-line bg-white"><div class="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-5 sm:px-6"><div><h3 class="font-display text-lg font-bold text-ink">Necesidades de compra</h3><p class="mt-1 text-xs text-muted">Demanda de pedidos pendientes que requiere abastecimiento.</p></div><div class="flex gap-2"><input id="requirements-search" type="search" aria-label="Buscar necesidades de compra" placeholder="Buscar..." class="w-40 rounded-lg border border-line px-3 py-2 text-xs outline-none focus:border-forest" /><button id="requirements-filter" class="rounded-lg border border-line px-3 py-2 text-xs font-bold text-ink">Filtrar</button></div></div><div class="overflow-x-auto"><table class="w-full min-w-190 text-left"><thead class="bg-paper text-[10px] uppercase tracking-[0.15em] text-muted"><tr><th class="px-5 py-3 font-bold sm:px-6">Producto</th><th class="px-5 py-3 text-right font-bold">Solicitado</th><th class="px-5 py-3 text-right font-bold">Comprado</th><th class="px-5 py-3 text-right font-bold">Por comprar</th><th class="px-5 py-3 font-bold">Pedidos</th><th class="px-5 py-3 font-bold">Fecha próxima</th><th class="px-5 py-3 font-bold">Estado</th></tr></thead><tbody id="requirements-table"></tbody></table></div><p id="requirements-empty" class="hidden px-6 py-10 text-center text-sm text-muted"></p></section>
     <section class="overflow-hidden rounded-2xl border border-line bg-white"><div class="border-b border-line px-5 py-5 sm:px-6"><h3 class="font-display text-lg font-bold text-ink">Compras realizadas</h3><p class="mt-1 text-xs text-muted">Últimos documentos de compra no anulados.</p></div><div class="overflow-x-auto"><table class="w-full min-w-175 text-left"><thead class="bg-paper text-[10px] uppercase tracking-[0.15em] text-muted"><tr><th class="px-5 py-3 font-bold sm:px-6">Documento</th><th class="px-5 py-3 font-bold">Proveedor</th><th class="px-5 py-3 font-bold">Fecha</th><th class="px-5 py-3 text-right font-bold">Total</th><th class="px-5 py-3 font-bold">Pago</th></tr></thead><tbody id="purchases-table"></tbody></table></div><p id="purchases-empty" class="hidden px-6 py-10 text-center text-sm text-muted"></p></section>
@@ -14,13 +14,79 @@ import MainLayout from '../../layouts/MainLayout.astro';
 <script>
   interface Requirement { producto: string; cantidad_solicitada: number; cantidad_comprada: number; faltante: number; pedidos_asociados: number; fecha_proxima: string | null; estado_cobertura: string; }
   interface Purchase { numero_documento: string; proveedor: string; fecha_emision: string; total: number; estado_pago: string; }
-  const apiBaseUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`; const requirementBody = document.querySelector<HTMLTableSectionElement>('#requirements-table')!; const purchaseBody = document.querySelector<HTMLTableSectionElement>('#purchases-table')!; const requirementSearch = document.querySelector<HTMLInputElement>('#requirements-search')!; const requirementEmpty = document.querySelector<HTMLParagraphElement>('#requirements-empty')!; const purchaseEmpty = document.querySelector<HTMLParagraphElement>('#purchases-empty')!;
+  interface PurchasingResponse { requirements: Requirement[]; purchases: Purchase[]; available_dates: string[]; selected_date: string | null; kpis: { pending_orders: number; products_to_buy: number; coverage: number; purchases_value: number; }; }
+  const apiBaseUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+  const requirementBody = document.querySelector<HTMLTableSectionElement>('#requirements-table')!;
+  const purchaseBody = document.querySelector<HTMLTableSectionElement>('#purchases-table')!;
+  const requirementSearch = document.querySelector<HTMLInputElement>('#requirements-search')!;
+  const globalDateFilter = document.querySelector<HTMLInputElement>('#global-date-filter')!;
+  const requirementEmpty = document.querySelector<HTMLParagraphElement>('#requirements-empty')!;
+  const purchaseEmpty = document.querySelector<HTMLParagraphElement>('#purchases-empty')!;
   const currency = (value: number) => new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'USD' }).format(Number(value));
   const number = (value: number) => new Intl.NumberFormat('es-VE', { maximumFractionDigits: 3 }).format(Number(value));
-  const filterRequirements = () => { const query = requirementSearch.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase(); const visible = [...requirementBody.querySelectorAll<HTMLTableRowElement>('tr')].filter((row) => { const match = (row.textContent ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query); row.hidden = !match; return match; }).length; requirementEmpty.classList.toggle('hidden', visible > 0); };
+  let initialLoad = true;
+
+  const filterRequirements = () => {
+    const query = requirementSearch.value.trim().normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+    const visible = [...requirementBody.querySelectorAll<HTMLTableRowElement>('tr')].filter((row) => {
+      const match = (row.textContent ?? '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().includes(query);
+      row.hidden = !match;
+      return match;
+    }).length;
+    requirementEmpty.classList.toggle('hidden', visible > 0);
+  };
+
   const requirementBadge = (state: string) => state === 'Cubierto' ? 'bg-mint text-forest' : state === 'Parcial' ? 'bg-[#fff6da] text-[#9a7419]' : 'bg-[#fff0eb] text-coral';
-  const renderRequirements = (requirements: Requirement[]) => { requirementBody.replaceChildren(); requirements.forEach((item) => { const row = document.createElement('tr'); row.className = 'border-t border-line text-sm'; row.innerHTML = `<td class="px-5 py-4 font-bold text-ink sm:px-6">${item.producto}</td><td class="px-5 py-4 text-right text-muted">${number(item.cantidad_solicitada)}</td><td class="px-5 py-4 text-right text-muted">${number(item.cantidad_comprada)}</td><td class="px-5 py-4 text-right font-bold text-ink">${number(item.faltante)}</td><td class="px-5 py-4 text-muted">${item.pedidos_asociados}</td><td class="px-5 py-4 text-muted">${item.fecha_proxima ? new Date(`${item.fecha_proxima}T00:00:00`).toLocaleDateString('es-VE') : 'Por definir'}</td><td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${requirementBadge(item.estado_cobertura)}">${item.estado_cobertura}</span></td>`; requirementBody.append(row); }); requirementEmpty.textContent = requirements.length ? 'No se encontraron necesidades con esos criterios.' : 'No hay pedidos pendientes por abastecer.'; filterRequirements(); };
-  const renderPurchases = (purchases: Purchase[]) => { purchaseBody.replaceChildren(); purchases.forEach((purchase) => { const row = document.createElement('tr'); row.className = 'border-t border-line text-sm'; row.innerHTML = `<td class="px-5 py-4 font-bold text-ink sm:px-6">${purchase.numero_documento}</td><td class="px-5 py-4 text-muted">${purchase.proveedor}</td><td class="px-5 py-4 text-muted">${new Date(`${purchase.fecha_emision}T00:00:00`).toLocaleDateString('es-VE')}</td><td class="px-5 py-4 text-right font-bold text-ink">${currency(purchase.total)}</td><td class="px-5 py-4"><span class="rounded-full bg-paper px-2.5 py-1 text-[11px] font-bold text-muted">${purchase.estado_pago}</span></td>`; purchaseBody.append(row); }); purchaseEmpty.textContent = 'No hay compras realizadas.'; purchaseEmpty.classList.toggle('hidden', purchases.length > 0); };
-  requirementSearch.addEventListener('input', filterRequirements); document.querySelector<HTMLButtonElement>('#requirements-filter')!.addEventListener('click', filterRequirements);
-  fetch(`${apiBaseUrl}api/compras.php`).then((response) => response.ok ? response.json() : Promise.reject()).then((data) => { renderRequirements(data.requirements); renderPurchases(data.purchases); document.querySelector<HTMLElement>('#pending-orders')!.textContent = String(data.kpis.pending_orders); document.querySelector<HTMLElement>('#products-to-buy')!.textContent = String(data.kpis.products_to_buy); document.querySelector<HTMLElement>('#orders-coverage')!.textContent = `${data.kpis.coverage}%`; document.querySelector<HTMLElement>('#purchases-value')!.textContent = currency(data.kpis.purchases_value); }).catch(() => { requirementEmpty.textContent = 'No fue posible cargar las necesidades de compra.'; requirementEmpty.classList.remove('hidden'); purchaseEmpty.textContent = 'No fue posible cargar las compras.'; purchaseEmpty.classList.remove('hidden'); });
+
+  const renderRequirements = (requirements: Requirement[]) => {
+    requirementBody.replaceChildren();
+    requirements.forEach((item) => {
+      const row = document.createElement('tr');
+      row.className = 'border-t border-line text-sm';
+      row.innerHTML = `<td class="px-5 py-4 font-bold text-ink sm:px-6">${item.producto}</td><td class="px-5 py-4 text-right text-muted">${number(item.cantidad_solicitada)}</td><td class="px-5 py-4 text-right text-muted">${number(item.cantidad_comprada)}</td><td class="px-5 py-4 text-right font-bold text-ink">${number(item.faltante)}</td><td class="px-5 py-4 text-muted">${item.pedidos_asociados}</td><td class="px-5 py-4 text-muted">${item.fecha_proxima ? new Date(`${item.fecha_proxima}T00:00:00`).toLocaleDateString('es-VE') : 'Por definir'}</td><td class="px-5 py-4"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${requirementBadge(item.estado_cobertura)}">${item.estado_cobertura}</span></td>`;
+      requirementBody.append(row);
+    });
+    requirementEmpty.textContent = requirements.length ? 'No se encontraron necesidades con esos criterios.' : (globalDateFilter.value ? 'No hay pedidos pendientes para esa fecha de entrega.' : 'No hay pedidos pendientes por abastecer.');
+    filterRequirements();
+  };
+
+  const renderPurchases = (purchases: Purchase[]) => {
+    purchaseBody.replaceChildren();
+    purchases.forEach((purchase) => {
+      const row = document.createElement('tr');
+      row.className = 'border-t border-line text-sm';
+      row.innerHTML = `<td class="px-5 py-4 font-bold text-ink sm:px-6">${purchase.numero_documento}</td><td class="px-5 py-4 text-muted">${purchase.proveedor}</td><td class="px-5 py-4 text-muted">${new Date(`${purchase.fecha_emision}T00:00:00`).toLocaleDateString('es-VE')}</td><td class="px-5 py-4 text-right font-bold text-ink">${currency(purchase.total)}</td><td class="px-5 py-4"><span class="rounded-full bg-paper px-2.5 py-1 text-[11px] font-bold text-muted">${purchase.estado_pago}</span></td>`;
+      purchaseBody.append(row);
+    });
+    purchaseEmpty.textContent = purchases.length ? 'No se encontraron compras.' : (globalDateFilter.value ? 'No hay compras registradas para esta fecha.' : 'No hay compras realizadas.');
+    purchaseEmpty.classList.toggle('hidden', purchases.length > 0);
+  };
+
+  const loadData = () => {
+    const selectedDate = globalDateFilter.value;
+    const url = selectedDate || !initialLoad ? `${apiBaseUrl}api/compras.php?fecha=${encodeURIComponent(selectedDate)}` : `${apiBaseUrl}api/compras.php`;
+    fetch(url).then((response) => response.ok ? response.json() as Promise<PurchasingResponse> : Promise.reject()).then((data) => {
+      if (initialLoad && data.selected_date) {
+        globalDateFilter.value = data.selected_date;
+      }
+      initialLoad = false;
+      renderRequirements(data.requirements);
+      renderPurchases(data.purchases);
+      document.querySelector<HTMLElement>('#pending-orders')!.textContent = String(data.kpis.pending_orders);
+      document.querySelector<HTMLElement>('#products-to-buy')!.textContent = String(data.kpis.products_to_buy);
+      document.querySelector<HTMLElement>('#orders-coverage')!.textContent = `${data.kpis.coverage}%`;
+      document.querySelector<HTMLElement>('#purchases-value')!.textContent = currency(data.kpis.purchases_value);
+    }).catch(() => {
+      requirementEmpty.textContent = 'No fue posible cargar las necesidades de compra.';
+      requirementEmpty.classList.remove('hidden');
+      purchaseEmpty.textContent = 'No fue posible cargar las compras.';
+      purchaseEmpty.classList.remove('hidden');
+    });
+  };
+
+  requirementSearch.addEventListener('input', filterRequirements);
+  globalDateFilter.addEventListener('change', loadData);
+  globalDateFilter.addEventListener('input', loadData);
+  document.querySelector<HTMLButtonElement>('#requirements-filter')!.addEventListener('click', filterRequirements);
+  loadData();
 </script>
