@@ -66,34 +66,49 @@ import MainLayout from '../../layouts/MainLayout.astro';
 
       <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
         <legend class="px-1 font-display text-lg font-bold text-ink">Productos a comprar</legend>
-        <div class="mt-5 overflow-x-auto">
-          <table class="w-full min-w-180 text-left">
+        <div class="mt-5 overflow-x-auto max-w-[80vw]  rounded-xl border border-line">
+          <table class="w-full text-left border-collapse">
             <thead class="bg-paper text-[10px] uppercase tracking-[0.15em] text-muted">
               <tr>
-                <th class="px-3 py-3">Producto</th>
-                <th class="px-3 py-3">Cantidad</th>
-                <th class="px-3 py-3">Costo unitario</th>
-                <th class="px-3 py-3">IVA</th>
-                <th class="px-3 py-3 text-right">Subtotal</th>
-                <th class="px-3 py-3"><span class="sr-only">Acciones</span></th>
+                <th class="px-4 py-3.5 font-bold whitespace-nowrap">Producto</th>
+                <th class="px-4 py-3.5 font-bold whitespace-nowrap">Cantidad</th>
+                <th class="px-4 py-3.5 font-bold whitespace-nowrap">Costo unitario</th>
+                <th class="px-4 py-3.5 font-bold whitespace-nowrap">IVA</th>
+                <th class="px-4 py-3.5 text-right font-bold whitespace-nowrap">Subtotal</th>
+                <th class="px-4 py-3.5 text-right font-bold whitespace-nowrap"><span class="sr-only">Acciones</span></th>
               </tr>
             </thead>
-            <tbody id="purchase-lines"></tbody>
+            <tbody id="purchase-lines" class="divide-y divide-line bg-white">
+              <tr id="empty-purchase-lines">
+                <td colspan="6" class="px-4 py-8 md:text-center text-start text-sm text-muted">
+                  No hay productos agregados a la compra.
+                </td>
+              </tr>
+            </tbody>
           </table>
         </div>
-        <div class="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
-          <div class="flex flex-wrap items-center gap-2">
-            <button id="add-line" type="button" class="rounded-xl border border-line px-4 py-2.5 text-sm font-bold text-forest transition hover:bg-mint">
+        <div class="mt-4 flex flex-col gap-4 border-t border-line pt-4 md:flex-row md:items-center md:justify-between">
+          <div class="flex flex-col gap-2.5 sm:flex-row sm:items-center">
+            <button id="add-line" type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-line px-4 py-2.5 text-center text-sm font-bold text-forest transition hover:bg-mint sm:w-auto">
               Agregar producto +
             </button>
-            <button id="open-demand-modal" type="button" class="rounded-xl border border-line bg-mint px-4 py-2.5 text-sm font-bold text-forest transition hover:bg-[#b9dfc3]">
+            <button id="open-demand-modal" type="button" class="inline-flex w-full items-center justify-center rounded-xl border border-line bg-mint px-4 py-2.5 text-center text-sm font-bold text-forest transition hover:bg-[#b9dfc3] sm:w-auto">
               Cargar necesidades de compra
             </button>
           </div>
-          <div class="flex flex-wrap items-center gap-6 text-sm">
-            <p class="text-muted">Subtotal: <strong id="purchase-subtotal" class="font-bold text-ink">$0,00</strong></p>
-            <p class="text-muted">IVA (16%): <strong id="purchase-tax" class="font-bold text-ink">$0,00</strong></p>
-            <p class="text-base font-bold text-ink">Total: <strong id="purchase-total" class="font-bold text-forest">$0,00</strong></p>
+          <div class="flex flex-col gap-2 rounded-xl bg-paper p-3.5 text-sm sm:flex-row sm:items-center sm:gap-6 sm:bg-transparent sm:p-0">
+            <div class="flex items-center justify-between sm:justify-start sm:gap-2">
+              <span class="text-muted">Subtotal:</span>
+              <strong id="purchase-subtotal" class="font-bold text-ink">$0,00</strong>
+            </div>
+            <div class="flex items-center justify-between sm:justify-start sm:gap-2">
+              <span class="text-muted">IVA (16%):</span>
+              <strong id="purchase-tax" class="font-bold text-ink">$0,00</strong>
+            </div>
+            <div class="flex items-center justify-between border-t border-line/60 pt-2 text-base sm:border-0 sm:pt-0 sm:text-sm">
+              <span class="font-bold text-ink sm:font-normal sm:text-muted">Total:</span>
+              <strong id="purchase-total" class="font-bold text-forest">$0,00</strong>
+            </div>
           </div>
         </div>
       </fieldset>
@@ -128,15 +143,15 @@ import MainLayout from '../../layouts/MainLayout.astro';
           <input id="modal-cost" required type="number" min="0" step="0.01" value="0" class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
         </label>
       </div>
-      <div class="mt-6 flex justify-end gap-3">
-        <button id="modal-cancel" type="button" class="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink">Cancelar</button>
-        <button id="modal-submit" type="submit" class="rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white">Agregar producto</button>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+        <button id="modal-cancel" type="button" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink sm:w-auto">Cancelar</button>
+        <button id="modal-submit" type="submit" class="w-full rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white sm:w-auto">Agregar producto</button>
       </div>
     </form>
   </dialog>
 
   <dialog id="demand-modal" class="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-line bg-white p-0 text-ink shadow-2xl backdrop:bg-black/40">
-    <div class="p-6">
+    <div class="p-5 sm:p-6">
       <div class="flex items-start justify-between gap-4">
         <div>
           <h2 class="font-display text-lg font-bold text-ink">Necesidades de compra por demanda</h2>
@@ -147,17 +162,17 @@ import MainLayout from '../../layouts/MainLayout.astro';
         </button>
       </div>
 
-      <div class="mt-5 flex flex-wrap items-center gap-3">
-        <label class="text-xs font-bold text-ink">
+      <div class="mt-5 flex flex-col gap-3 sm:flex-row sm:items-end">
+        <label class="w-full text-xs font-bold text-ink sm:w-auto">
           Fecha de entrega del pedido:
           <input id="modal-demand-date" type="date" class="mt-1.5 block w-full rounded-lg border border-line bg-white px-3 py-2 text-xs font-normal outline-none focus:border-forest" />
         </label>
-        <button id="modal-fetch-demand-btn" type="button" class="mt-5 rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-forest transition hover:bg-mint">
+        <button id="modal-fetch-demand-btn" type="button" class="w-full rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-forest transition hover:bg-mint sm:w-auto">
           Consultar fecha
         </button>
       </div>
 
-      <div class="mt-4 max-h-72 overflow-y-auto rounded-xl border border-line">
+      <div class="mt-4 max-h-72 overflow-x-auto overflow-y-auto rounded-xl border border-line">
         <table class="w-full text-left text-sm">
           <thead class="sticky top-0 bg-paper text-[10px] uppercase tracking-[0.15em] text-muted">
             <tr>
@@ -172,9 +187,9 @@ import MainLayout from '../../layouts/MainLayout.astro';
         <p id="demand-modal-empty" class="hidden px-4 py-8 text-center text-sm text-muted"></p>
       </div>
 
-      <div class="mt-6 flex justify-end gap-3">
-        <button id="demand-modal-cancel" type="button" class="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink">Cancelar</button>
-        <button id="demand-modal-submit" type="button" class="rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white">Agregar seleccionados</button>
+      <div class="mt-6 flex flex-col-reverse gap-2 sm:flex-row sm:justify-end sm:gap-3">
+        <button id="demand-modal-cancel" type="button" class="w-full rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink sm:w-auto">Cancelar</button>
+        <button id="demand-modal-submit" type="button" class="w-full rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white sm:w-auto">Agregar seleccionados</button>
       </div>
     </div>
   </dialog>
@@ -267,11 +282,27 @@ import MainLayout from '../../layouts/MainLayout.astro';
   const recalculate = () => {
     let subtotal = 0;
     let tax = 0;
-    lines.querySelectorAll<HTMLTableRowElement>('tr').forEach((row) => {
+    const productRows = lines.querySelectorAll<HTMLTableRowElement>('tr[data-product-id]');
+
+    productRows.forEach((row) => {
       const lineSubtotal = Number(row.dataset.subtotal ?? 0);
       subtotal += lineSubtotal;
       if (row.dataset.includesVat === 'true') tax += lineSubtotal * 0.16;
     });
+
+    const emptyRow = lines.querySelector('#empty-purchase-lines');
+    if (productRows.length === 0) {
+      if (!emptyRow) {
+        lines.replaceChildren();
+        const placeholder = document.createElement('tr');
+        placeholder.id = 'empty-purchase-lines';
+        placeholder.innerHTML = '<td colspan="6" class="px-4 py-8 text-center text-sm text-muted">No hay productos agregados a la compra.</td>';
+        lines.append(placeholder);
+      }
+    } else {
+      emptyRow?.remove();
+    }
+
     document.querySelector<HTMLElement>('#purchase-subtotal')!.textContent = currency(subtotal);
     document.querySelector<HTMLElement>('#purchase-tax')!.textContent = currency(tax);
     document.querySelector<HTMLElement>('#purchase-total')!.textContent = currency(subtotal + tax);
@@ -304,6 +335,7 @@ import MainLayout from '../../layouts/MainLayout.astro';
   };
 
   const addLine = (product: Product, itemQuantity: number, itemCost: number) => {
+    lines.querySelector('#empty-purchase-lines')?.remove();
     const subtotal = Math.max(0, itemQuantity * itemCost);
     const includesVat = Number(product.lleva_iva) === 1;
     const existingRow = lines.querySelector<HTMLTableRowElement>(`tr[data-product-id="${product.id}"]`);
@@ -313,7 +345,8 @@ import MainLayout from '../../layouts/MainLayout.astro';
       existingRow.dataset.subtotal = String(subtotal);
       existingRow.dataset.quantity = String(itemQuantity);
       existingRow.dataset.includesVat = String(includesVat);
-      existingRow.innerHTML = `<td class="px-3 py-3 font-bold text-ink">${product.nombre}</td><td class="px-3 py-3 text-muted">${itemQuantity}</td><td class="px-3 py-3 text-muted">${currency(itemCost)}</td><td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-3 py-3 text-right font-bold">${currency(subtotal)}</td><td class="px-3 py-3 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
+      existingRow.className = 'border-t border-line text-sm whitespace-nowrap hover:bg-paper/50 transition-colors';
+      existingRow.innerHTML = `<td class="px-4 py-3.5 font-bold text-ink">${product.nombre}</td><td class="px-4 py-3.5 text-muted">${itemQuantity}</td><td class="px-4 py-3.5 text-muted">${currency(itemCost)}</td><td class="px-4 py-3.5"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-4 py-3.5 text-right font-bold text-ink">${currency(subtotal)}</td><td class="px-4 py-3.5 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
       existingRow.querySelector<HTMLButtonElement>('.edit-line')!.addEventListener('click', () => {
         editingRow = existingRow;
         selectedProduct = product;
@@ -330,13 +363,13 @@ import MainLayout from '../../layouts/MainLayout.astro';
       });
     } else {
       const row = document.createElement('tr');
-      row.className = 'border-t border-line text-sm';
+      row.className = 'border-t border-line text-sm whitespace-nowrap hover:bg-paper/50 transition-colors';
       row.dataset.productId = String(product.id);
       row.dataset.cost = String(itemCost);
       row.dataset.subtotal = String(subtotal);
       row.dataset.quantity = String(itemQuantity);
       row.dataset.includesVat = String(includesVat);
-      row.innerHTML = `<td class="px-3 py-3 font-bold text-ink">${product.nombre}</td><td class="px-3 py-3 text-muted">${itemQuantity}</td><td class="px-3 py-3 text-muted">${currency(itemCost)}</td><td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-3 py-3 text-right font-bold">${currency(subtotal)}</td><td class="px-3 py-3 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
+      row.innerHTML = `<td class="px-4 py-3.5 font-bold text-ink">${product.nombre}</td><td class="px-4 py-3.5 text-muted">${itemQuantity}</td><td class="px-4 py-3.5 text-muted">${currency(itemCost)}</td><td class="px-4 py-3.5"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-4 py-3.5 text-right font-bold text-ink">${currency(subtotal)}</td><td class="px-4 py-3.5 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
       row.querySelector<HTMLButtonElement>('.edit-line')!.addEventListener('click', () => {
         editingRow = row;
         selectedProduct = product;
