@@ -1,0 +1,607 @@
+---
+import MainLayout from '../../layouts/MainLayout.astro';
+---
+
+<MainLayout title="Registrar compra">
+  <section class="mx-auto w-full max-w-6xl px-4 pb-8 pt-5 sm:px-6 md:px-8 md:pt-8">
+    <div class="sticky top-14 z-40 -mx-4 mb-8 flex flex-col justify-between gap-5 border-b border-outline-variant bg-surface px-4 py-4 sm:-mx-6 sm:flex-row sm:items-end sm:px-6 md:-mx-8 md:px-8">
+      <div>
+        <a href="/compras" class="inline-flex items-center gap-1 text-xs font-bold text-forest">
+          <span class="material-symbols-outlined text-base">arrow_back</span>Compras
+        </a>
+        <p class="mb-2 mt-4 text-xs font-bold uppercase tracking-[0.2em] text-forest">Abastecimiento</p>
+        <h2 class="font-display text-3xl font-bold tracking-tight text-ink sm:text-4xl">Registrar compra</h2>
+        <p class="mt-2 text-sm leading-6 text-muted">Ingresa el documento del proveedor y los productos a abastecer.</p>
+      </div>
+      <div class="flex gap-3">
+        <a href="/compras" class="rounded-xl border border-line px-4 py-2.5 text-sm font-bold text-ink">Cancelar</a>
+        <button id="purchase-submit-btn" form="purchase-form" type="submit" class="rounded-xl bg-forest px-4 py-2.5 text-sm font-bold text-white">Guardar compra</button>
+      </div>
+    </div>
+
+    <form id="purchase-form" class="space-y-6" novalidate>
+      <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <legend class="px-1 font-display text-lg font-bold text-ink">Información del documento</legend>
+        <div class="mt-5 grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+          <label class="text-sm font-bold text-ink">
+            Proveedor <span class="text-coral">*</span>
+            <select id="purchase-supplier" required class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest">
+              <option value="">Cargando proveedores...</option>
+            </select>
+          </label>
+
+          <label class="text-sm font-bold text-ink">
+            Tipo de documento <span class="text-coral">*</span>
+            <select id="purchase-type" required class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest">
+              <option value="factura">Factura de compra</option>
+              <option value="orden_compra">Orden de compra</option>
+              <option value="nota_entrada">Nota de entrada</option>
+            </select>
+          </label>
+
+          <label class="text-sm font-bold text-ink">
+            Número de documento <span class="text-coral">*</span>
+            <input id="purchase-number" required type="text" placeholder="FAC-COMP-00001" class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+          </label>
+
+          <label class="text-sm font-bold text-ink">
+            Fecha de emisión <span class="text-coral">*</span>
+            <input id="purchase-date" required type="date" class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+          </label>
+
+          <label class="text-sm font-bold text-ink">
+            Condición de pago <span class="text-coral">*</span>
+            <select id="purchase-payment-terms" required class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest">
+              <option value="credito">Crédito</option>
+              <option value="contado">Contado</option>
+            </select>
+          </label>
+
+          <label class="text-sm font-bold text-ink">
+            Fecha de vencimiento <span class="text-coral">*</span>
+            <input id="purchase-due-date" required type="date" class="mt-2 w-full rounded-lg border border-line bg-white px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+          </label>
+        </div>
+      </fieldset>
+
+      <fieldset class="rounded-2xl border border-line bg-white p-5 sm:p-6">
+        <legend class="px-1 font-display text-lg font-bold text-ink">Productos a comprar</legend>
+        <div class="mt-5 overflow-x-auto">
+          <table class="w-full min-w-180 text-left">
+            <thead class="bg-paper text-[10px] uppercase tracking-[0.15em] text-muted">
+              <tr>
+                <th class="px-3 py-3">Producto</th>
+                <th class="px-3 py-3">Cantidad</th>
+                <th class="px-3 py-3">Costo unitario</th>
+                <th class="px-3 py-3">IVA</th>
+                <th class="px-3 py-3 text-right">Subtotal</th>
+                <th class="px-3 py-3"><span class="sr-only">Acciones</span></th>
+              </tr>
+            </thead>
+            <tbody id="purchase-lines"></tbody>
+          </table>
+        </div>
+        <div class="mt-4 flex flex-wrap items-center justify-between gap-4 border-t border-line pt-4">
+          <div class="flex flex-wrap items-center gap-2">
+            <button id="add-line" type="button" class="rounded-xl border border-line px-4 py-2.5 text-sm font-bold text-forest transition hover:bg-mint">
+              Agregar producto +
+            </button>
+            <button id="open-demand-modal" type="button" class="rounded-xl border border-line bg-mint px-4 py-2.5 text-sm font-bold text-forest transition hover:bg-[#b9dfc3]">
+              Cargar necesidades de compra
+            </button>
+          </div>
+          <div class="flex flex-wrap items-center gap-6 text-sm">
+            <p class="text-muted">Subtotal: <strong id="purchase-subtotal" class="font-bold text-ink">$0,00</strong></p>
+            <p class="text-muted">IVA (16%): <strong id="purchase-tax" class="font-bold text-ink">$0,00</strong></p>
+            <p class="text-base font-bold text-ink">Total: <strong id="purchase-total" class="font-bold text-forest">$0,00</strong></p>
+          </div>
+        </div>
+      </fieldset>
+
+      <div id="purchase-feedback" class="hidden"></div>
+    </form>
+  </section>
+
+  <dialog id="product-modal" class="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-lg rounded-xl border border-line bg-white p-0 text-ink shadow-2xl backdrop:bg-black/40">
+    <form id="product-form" class="p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 id="product-modal-title" class="font-display text-lg font-bold">Agregar producto</h2>
+          <p class="mt-1 text-sm text-muted">Selecciona el producto, la cantidad y el costo acordado con el proveedor.</p>
+        </div>
+        <button id="modal-close" type="button" class="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-paper" aria-label="Cerrar modal">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+      <div class="mt-6 grid gap-4 sm:grid-cols-2">
+        <div class="relative sm:col-span-2">
+          <label for="modal-product-search" class="text-sm font-bold text-ink">Buscar producto <span class="text-coral">*</span></label>
+          <input id="modal-product-search" required type="search" autocomplete="off" placeholder="Escribe el nombre del producto..." aria-controls="product-suggestions" aria-autocomplete="list" class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+          <div id="product-suggestions" role="listbox" class="absolute left-0 right-0 top-full z-10 mt-1 hidden max-h-52 overflow-y-auto rounded-lg border border-line bg-white p-1 shadow-lg"></div>
+        </div>
+        <label class="text-sm font-bold text-ink">
+          Cantidad <span class="text-coral">*</span>
+          <input id="modal-quantity" required type="number" min="0.5" step="0.5" value="1" class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+        </label>
+        <label class="text-sm font-bold text-ink">
+          Costo unitario <span class="text-coral">*</span>
+          <input id="modal-cost" required type="number" min="0" step="0.01" value="0" class="mt-2 w-full rounded-lg border border-line px-3 py-2.5 text-sm font-normal outline-none focus:border-forest" />
+        </label>
+      </div>
+      <div class="mt-6 flex justify-end gap-3">
+        <button id="modal-cancel" type="button" class="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink">Cancelar</button>
+        <button id="modal-submit" type="submit" class="rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white">Agregar producto</button>
+      </div>
+    </form>
+  </dialog>
+
+  <dialog id="demand-modal" class="fixed inset-0 m-auto h-fit w-[calc(100%-2rem)] max-w-2xl rounded-xl border border-line bg-white p-0 text-ink shadow-2xl backdrop:bg-black/40">
+    <div class="p-6">
+      <div class="flex items-start justify-between gap-4">
+        <div>
+          <h2 class="font-display text-lg font-bold text-ink">Necesidades de compra por demanda</h2>
+          <p class="mt-1 text-sm text-muted">Selecciona los productos requeridos por tus clientes para agregarlos a la compra.</p>
+        </div>
+        <button id="demand-modal-close" type="button" class="grid h-8 w-8 place-items-center rounded-lg text-muted hover:bg-paper" aria-label="Cerrar modal">
+          <span class="material-symbols-outlined">close</span>
+        </button>
+      </div>
+
+      <div class="mt-5 flex flex-wrap items-center gap-3">
+        <label class="text-xs font-bold text-ink">
+          Fecha de entrega del pedido:
+          <input id="modal-demand-date" type="date" class="mt-1.5 block w-full rounded-lg border border-line bg-white px-3 py-2 text-xs font-normal outline-none focus:border-forest" />
+        </label>
+        <button id="modal-fetch-demand-btn" type="button" class="mt-5 rounded-lg border border-line bg-surface px-3 py-2 text-xs font-bold text-forest transition hover:bg-mint">
+          Consultar fecha
+        </button>
+      </div>
+
+      <div class="mt-4 max-h-72 overflow-y-auto rounded-xl border border-line">
+        <table class="w-full text-left text-sm">
+          <thead class="sticky top-0 bg-paper text-[10px] uppercase tracking-[0.15em] text-muted">
+            <tr>
+              <th class="px-4 py-3"><input id="demand-check-all" type="checkbox" class="cursor-pointer rounded border-line" title="Seleccionar todos" /></th>
+              <th class="px-4 py-3 font-bold">Producto</th>
+              <th class="px-4 py-3 text-right font-bold">Faltante</th>
+              <th class="px-4 py-3 text-right font-bold">Costo unitario</th>
+            </tr>
+          </thead>
+          <tbody id="demand-modal-body"></tbody>
+        </table>
+        <p id="demand-modal-empty" class="hidden px-4 py-8 text-center text-sm text-muted"></p>
+      </div>
+
+      <div class="mt-6 flex justify-end gap-3">
+        <button id="demand-modal-cancel" type="button" class="rounded-lg border border-line px-4 py-2.5 text-sm font-bold text-ink">Cancelar</button>
+        <button id="demand-modal-submit" type="button" class="rounded-lg bg-forest px-4 py-2.5 text-sm font-bold text-white">Agregar seleccionados</button>
+      </div>
+    </div>
+  </dialog>
+</MainLayout>
+
+<script>
+  interface Supplier { id: number; nombre: string; dias_plazo: number; }
+  interface Product { id: number; nombre: string; precio_compra: number; lleva_iva: number; }
+  interface DemandItem { producto_id: number; producto: string; cantidad: number; costo_unitario: number; lleva_iva: number; }
+  interface FormDataResponse { suppliers: Supplier[]; products: Product[]; next_document_number: string; available_dates: string[]; selected_date: string | null; demand: DemandItem[]; }
+  interface PurchaseSingleResponse {
+    purchase: {
+      id: number;
+      proveedor_id: number;
+      tipo_documento: string;
+      numero_documento: string;
+      fecha_emision: string;
+      fecha_vencimiento: string;
+      condicion_pago: string;
+      subtotal: number;
+      impuesto: number;
+      total: number;
+      detalles: Array<{
+        producto_id: number;
+        producto: string;
+        lleva_iva: number;
+        cantidad: number;
+        costo_unitario: number;
+        subtotal: number;
+      }>;
+    };
+  }
+
+  const apiBaseUrl = `${import.meta.env.BASE_URL.replace(/\/$/, '')}/`;
+  const purchaseId = new URLSearchParams(window.location.search).get('id');
+  if (purchaseId) {
+    const pageTitle = document.querySelector<HTMLElement>('h2');
+    if (pageTitle) pageTitle.textContent = 'Editar compra';
+    const submitBtn = document.querySelector<HTMLButtonElement>('#purchase-submit-btn');
+    if (submitBtn) submitBtn.textContent = 'Guardar cambios';
+    document.title = 'Editar compra | Kredia';
+  }
+  const form = document.querySelector<HTMLFormElement>('#purchase-form')!;
+  const supplierSelect = document.querySelector<HTMLSelectElement>('#purchase-supplier')!;
+  const numberInput = document.querySelector<HTMLInputElement>('#purchase-number')!;
+  const dateInput = document.querySelector<HTMLInputElement>('#purchase-date')!;
+  const paymentTermsSelect = document.querySelector<HTMLSelectElement>('#purchase-payment-terms')!;
+  const dueDateInput = document.querySelector<HTMLInputElement>('#purchase-due-date')!;
+  const lines = document.querySelector<HTMLTableSectionElement>('#purchase-lines')!;
+
+  const modal = document.querySelector<HTMLDialogElement>('#product-modal')!;
+  const modalForm = document.querySelector<HTMLFormElement>('#product-form')!;
+  const modalTitle = document.querySelector<HTMLElement>('#product-modal-title')!;
+  const modalSubmit = document.querySelector<HTMLButtonElement>('#modal-submit')!;
+  const search = document.querySelector<HTMLInputElement>('#modal-product-search')!;
+  const suggestions = document.querySelector<HTMLDivElement>('#product-suggestions')!;
+  const quantity = document.querySelector<HTMLInputElement>('#modal-quantity')!;
+  const costInput = document.querySelector<HTMLInputElement>('#modal-cost')!;
+
+  const demandModal = document.querySelector<HTMLDialogElement>('#demand-modal')!;
+  const modalDemandDate = document.querySelector<HTMLInputElement>('#modal-demand-date')!;
+  const demandModalBody = document.querySelector<HTMLTableSectionElement>('#demand-modal-body')!;
+  const demandModalEmpty = document.querySelector<HTMLParagraphElement>('#demand-modal-empty')!;
+  const demandCheckAll = document.querySelector<HTMLInputElement>('#demand-check-all')!;
+
+  const currency = (value: number) => new Intl.NumberFormat('es-VE', { style: 'currency', currency: 'USD' }).format(value);
+
+  let suppliers: Supplier[] = [];
+  let products: Product[] = [];
+  let selectedProduct: Product | null = null;
+  let editingRow: HTMLTableRowElement | null = null;
+  let selectedDeliveryDate: string | null = null;
+
+  const today = new Date().toISOString().split('T')[0];
+  dateInput.value = today;
+  dueDateInput.value = today;
+
+  const updateDueDate = () => {
+    const selectedSupplier = suppliers.find((s) => String(s.id) === supplierSelect.value);
+    const emission = dateInput.value ? new Date(`${dateInput.value}T00:00:00`) : new Date();
+    if (paymentTermsSelect.value === 'contado') {
+      dueDateInput.value = dateInput.value;
+    } else {
+      const days = selectedSupplier ? Number(selectedSupplier.dias_plazo) : 30;
+      emission.setDate(emission.getDate() + days);
+      dueDateInput.value = emission.toISOString().split('T')[0];
+    }
+  };
+
+  const recalculate = () => {
+    let subtotal = 0;
+    let tax = 0;
+    lines.querySelectorAll<HTMLTableRowElement>('tr').forEach((row) => {
+      const lineSubtotal = Number(row.dataset.subtotal ?? 0);
+      subtotal += lineSubtotal;
+      if (row.dataset.includesVat === 'true') tax += lineSubtotal * 0.16;
+    });
+    document.querySelector<HTMLElement>('#purchase-subtotal')!.textContent = currency(subtotal);
+    document.querySelector<HTMLElement>('#purchase-tax')!.textContent = currency(tax);
+    document.querySelector<HTMLElement>('#purchase-total')!.textContent = currency(subtotal + tax);
+  };
+
+  const closeModal = () => modal.close('cancel');
+  const closeDemandModal = () => demandModal.close('cancel');
+  const normalizeSearch = (value: string) => value.normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLocaleLowerCase('es-VE');
+
+  const renderSuggestions = () => {
+    const query = normalizeSearch(search.value.trim());
+    suggestions.replaceChildren();
+    if (!query) return suggestions.classList.add('hidden');
+    const matches = products.filter((product) => normalizeSearch(product.nombre).includes(query)).slice(0, 8);
+    matches.forEach((product) => {
+      const item = document.createElement('button');
+      item.type = 'button';
+      item.role = 'option';
+      item.className = 'flex w-full items-center justify-between rounded-md px-3 py-2 text-left text-sm hover:bg-mint';
+      item.textContent = product.nombre;
+      item.addEventListener('click', () => {
+        selectedProduct = product;
+        search.value = product.nombre;
+        suggestions.classList.add('hidden');
+        costInput.value = String(product.precio_compra);
+      });
+      suggestions.append(item);
+    });
+    suggestions.classList.toggle('hidden', matches.length === 0);
+  };
+
+  const addLine = (product: Product, itemQuantity: number, itemCost: number) => {
+    const subtotal = Math.max(0, itemQuantity * itemCost);
+    const includesVat = Number(product.lleva_iva) === 1;
+    const existingRow = lines.querySelector<HTMLTableRowElement>(`tr[data-product-id="${product.id}"]`);
+
+    if (existingRow) {
+      existingRow.dataset.cost = String(itemCost);
+      existingRow.dataset.subtotal = String(subtotal);
+      existingRow.dataset.quantity = String(itemQuantity);
+      existingRow.dataset.includesVat = String(includesVat);
+      existingRow.innerHTML = `<td class="px-3 py-3 font-bold text-ink">${product.nombre}</td><td class="px-3 py-3 text-muted">${itemQuantity}</td><td class="px-3 py-3 text-muted">${currency(itemCost)}</td><td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-3 py-3 text-right font-bold">${currency(subtotal)}</td><td class="px-3 py-3 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
+      existingRow.querySelector<HTMLButtonElement>('.edit-line')!.addEventListener('click', () => {
+        editingRow = existingRow;
+        selectedProduct = product;
+        search.value = product.nombre;
+        quantity.value = String(itemQuantity);
+        costInput.value = String(itemCost);
+        modalTitle.textContent = 'Editar producto';
+        modalSubmit.textContent = 'Actualizar producto';
+        modal.showModal();
+      });
+      existingRow.querySelector<HTMLButtonElement>('.remove-line')!.addEventListener('click', () => {
+        existingRow.remove();
+        recalculate();
+      });
+    } else {
+      const row = document.createElement('tr');
+      row.className = 'border-t border-line text-sm';
+      row.dataset.productId = String(product.id);
+      row.dataset.cost = String(itemCost);
+      row.dataset.subtotal = String(subtotal);
+      row.dataset.quantity = String(itemQuantity);
+      row.dataset.includesVat = String(includesVat);
+      row.innerHTML = `<td class="px-3 py-3 font-bold text-ink">${product.nombre}</td><td class="px-3 py-3 text-muted">${itemQuantity}</td><td class="px-3 py-3 text-muted">${currency(itemCost)}</td><td class="px-3 py-3"><span class="rounded-full px-2.5 py-1 text-[11px] font-bold ${includesVat ? 'bg-mint text-forest' : 'bg-paper text-muted'}">${includesVat ? '16%' : 'Exento'}</span></td><td class="px-3 py-3 text-right font-bold">${currency(subtotal)}</td><td class="px-3 py-3 text-right"><div class="flex justify-end gap-1"><button type="button" class="edit-line grid h-8 w-8 place-items-center rounded-lg text-forest hover:bg-mint" aria-label="Editar ${product.nombre}" title="Editar producto"><span class="material-symbols-outlined text-[19px]">edit</span></button><button type="button" class="remove-line grid h-8 w-8 place-items-center rounded-lg text-coral hover:bg-[#fff0eb]" aria-label="Quitar ${product.nombre}" title="Quitar producto"><span class="material-symbols-outlined text-[19px]">delete</span></button></div></td>`;
+      row.querySelector<HTMLButtonElement>('.edit-line')!.addEventListener('click', () => {
+        editingRow = row;
+        selectedProduct = product;
+        search.value = product.nombre;
+        quantity.value = String(itemQuantity);
+        costInput.value = String(itemCost);
+        modalTitle.textContent = 'Editar producto';
+        modalSubmit.textContent = 'Actualizar producto';
+        modal.showModal();
+      });
+      row.querySelector<HTMLButtonElement>('.remove-line')!.addEventListener('click', () => {
+        row.remove();
+        recalculate();
+      });
+      lines.append(row);
+    }
+    recalculate();
+  };
+
+  const loadDemandInModal = (dateStr: string) => {
+    demandModalBody.replaceChildren();
+    demandCheckAll.checked = true;
+    const url = dateStr ? `${apiBaseUrl}api/compras.php?action=form_data&fecha=${encodeURIComponent(dateStr)}` : `${apiBaseUrl}api/compras.php?action=form_data`;
+    fetch(url)
+      .then((res) => res.json() as Promise<FormDataResponse>)
+      .then((data) => {
+        if (data.selected_date && !modalDemandDate.value) {
+          modalDemandDate.value = data.selected_date;
+        }
+
+        const filteredDemand = (data.demand || []).map((item) => {
+          const existingRow = lines.querySelector<HTMLTableRowElement>(`tr[data-product-id="${item.producto_id}"]`);
+          const qtyInTable = existingRow ? Number(existingRow.dataset.quantity ?? 0) : 0;
+          const netQty = Math.max(0, item.cantidad - qtyInTable);
+          return { ...item, cantidad: netQty };
+        }).filter((item) => item.cantidad > 0);
+
+        if (filteredDemand.length === 0) {
+          demandModalEmpty.textContent = 'No hay necesidades de compra pendientes para esta fecha.';
+          demandModalEmpty.classList.remove('hidden');
+          return;
+        }
+        demandModalEmpty.classList.add('hidden');
+        filteredDemand.forEach((item) => {
+          const row = document.createElement('tr');
+          row.className = 'border-t border-line text-sm';
+          row.dataset.productId = String(item.producto_id);
+          row.dataset.productName = item.producto;
+          row.dataset.vat = String(item.lleva_iva);
+          row.innerHTML = `<td class="px-4 py-3"><input type="checkbox" class="demand-item-checkbox cursor-pointer rounded border-line" checked /></td><td class="px-4 py-3 font-bold text-ink">${item.producto}</td><td class="px-4 py-3 text-right"><input type="number" class="demand-item-qty w-20 rounded-md border border-line px-2 py-1 text-right text-xs font-bold outline-none focus:border-forest" min="0.5" step="0.5" value="${item.cantidad}" /></td><td class="px-4 py-3 text-right"><input type="number" class="demand-item-cost w-24 rounded-md border border-line px-2 py-1 text-right text-xs font-bold outline-none focus:border-forest" min="0" step="0.01" value="${item.costo_unitario}" /></td>`;
+          demandModalBody.append(row);
+        });
+      })
+      .catch(() => {
+        demandModalEmpty.textContent = 'No fue posible consultar las necesidades de compra.';
+        demandModalEmpty.classList.remove('hidden');
+      });
+  };
+
+  document.querySelector<HTMLButtonElement>('#add-line')!.addEventListener('click', () => {
+    modalForm.reset();
+    editingRow = null;
+    selectedProduct = null;
+    modalTitle.textContent = 'Agregar producto';
+    modalSubmit.textContent = 'Agregar producto';
+    costInput.value = '0';
+    suggestions.classList.add('hidden');
+    modal.showModal();
+    search.focus();
+  });
+
+  document.querySelector<HTMLButtonElement>('#open-demand-modal')!.addEventListener('click', () => {
+    loadDemandInModal(modalDemandDate.value);
+    demandModal.showModal();
+  });
+
+  document.querySelector<HTMLButtonElement>('#modal-fetch-demand-btn')!.addEventListener('click', () => {
+    loadDemandInModal(modalDemandDate.value);
+  });
+
+  document.querySelector<HTMLButtonElement>('#modal-close')!.addEventListener('click', closeModal);
+  document.querySelector<HTMLButtonElement>('#modal-cancel')!.addEventListener('click', closeModal);
+
+  document.querySelector<HTMLButtonElement>('#demand-modal-close')!.addEventListener('click', closeDemandModal);
+  document.querySelector<HTMLButtonElement>('#demand-modal-cancel')!.addEventListener('click', closeDemandModal);
+
+  demandCheckAll.addEventListener('change', () => {
+    demandModalBody.querySelectorAll<HTMLInputElement>('.demand-item-checkbox').forEach((checkbox) => {
+      checkbox.checked = demandCheckAll.checked;
+    });
+  });
+
+  document.querySelector<HTMLButtonElement>('#demand-modal-submit')!.addEventListener('click', () => {
+    const checkedRows = demandModalBody.querySelectorAll<HTMLTableRowElement>('tr');
+    let addedCount = 0;
+    checkedRows.forEach((row) => {
+      const checkbox = row.querySelector<HTMLInputElement>('.demand-item-checkbox');
+      if (checkbox && checkbox.checked) {
+        const productId = Number(row.dataset.productId);
+        const productName = row.dataset.productName ?? '';
+        const llevaIva = Number(row.dataset.vat ?? 0);
+        const qty = Number(row.querySelector<HTMLInputElement>('.demand-item-qty')!.value);
+        const cost = Number(row.querySelector<HTMLInputElement>('.demand-item-cost')!.value);
+
+        if (productId && qty > 0 && cost >= 0) {
+          const product = products.find((p) => String(p.id) === String(productId)) ?? {
+            id: productId,
+            nombre: productName,
+            precio_compra: cost,
+            lleva_iva: llevaIva
+          };
+          const existingRow = lines.querySelector<HTMLTableRowElement>(`tr[data-product-id="${productId}"]`);
+          const currentQty = existingRow ? Number(existingRow.dataset.quantity ?? 0) : 0;
+          const finalQty = currentQty + qty;
+          addLine(product, finalQty, cost);
+          addedCount++;
+        }
+      }
+    });
+
+    if (addedCount > 0) {
+      selectedDeliveryDate = modalDemandDate.value || null;
+    }
+    demandModal.close('confirm');
+  });
+
+  search.addEventListener('input', () => {
+    selectedProduct = null;
+    search.setCustomValidity('');
+    costInput.value = '0';
+    renderSuggestions();
+  });
+
+  modalForm.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!selectedProduct) {
+      search.setCustomValidity('Selecciona un producto de las sugerencias.');
+      search.reportValidity();
+      return;
+    }
+    search.setCustomValidity('');
+    if (!modalForm.checkValidity()) return modalForm.reportValidity();
+    const rowToReplace = editingRow;
+    addLine(selectedProduct, Number(quantity.value), Number(costInput.value));
+    const replacementRow = lines.lastElementChild;
+    if (rowToReplace && replacementRow) rowToReplace.replaceWith(replacementRow);
+    editingRow = null;
+    recalculate();
+    modal.close('confirm');
+  });
+
+  modal.addEventListener('close', () => {
+    if (modal.returnValue !== 'confirm') {
+      modalForm.reset();
+      editingRow = null;
+      selectedProduct = null;
+      suggestions.classList.add('hidden');
+    }
+  });
+
+  supplierSelect.addEventListener('change', updateDueDate);
+  dateInput.addEventListener('change', updateDueDate);
+  paymentTermsSelect.addEventListener('change', updateDueDate);
+
+  fetch(`${apiBaseUrl}api/compras.php?action=form_data`)
+    .then((res) => res.json() as Promise<FormDataResponse>)
+    .then(async (data) => {
+      suppliers = data.suppliers;
+      products = data.products;
+      numberInput.value = data.next_document_number;
+
+      supplierSelect.replaceChildren();
+      suppliers.forEach((supplier) => {
+        const option = document.createElement('option');
+        option.value = String(supplier.id);
+        option.textContent = supplier.nombre;
+        supplierSelect.append(option);
+      });
+
+      if (suppliers.length > 0) {
+        supplierSelect.value = String(suppliers[0].id);
+        updateDueDate();
+      }
+
+      if (data.selected_date) {
+        modalDemandDate.value = data.selected_date;
+      }
+
+      if (purchaseId) {
+        try {
+          const res = await fetch(`${apiBaseUrl}api/compras.php?id=${encodeURIComponent(purchaseId)}`);
+          if (!res.ok) throw new Error();
+          const { purchase } = await res.json() as PurchaseSingleResponse;
+          supplierSelect.value = String(purchase.proveedor_id);
+          document.querySelector<HTMLSelectElement>('#purchase-type')!.value = purchase.tipo_documento;
+          numberInput.value = purchase.numero_documento;
+          dateInput.value = purchase.fecha_emision;
+          dueDateInput.value = purchase.fecha_vencimiento;
+          paymentTermsSelect.value = purchase.condicion_pago;
+
+          lines.replaceChildren();
+          purchase.detalles.forEach((detail) => {
+            const product = products.find((p) => String(p.id) === String(detail.producto_id)) ?? {
+              id: detail.producto_id,
+              nombre: detail.producto,
+              precio_compra: Number(detail.costo_unitario),
+              lleva_iva: Number(detail.lleva_iva ?? 0)
+            };
+            addLine(product, Number(detail.cantidad), Number(detail.costo_unitario));
+          });
+          recalculate();
+        } catch {
+          const feedback = document.querySelector<HTMLElement>('#purchase-feedback')!;
+          feedback.textContent = 'No fue posible cargar la compra a editar.';
+          feedback.className = 'rounded-xl border border-[#ffdad6] bg-[#fff0eb] px-4 py-3 text-sm font-bold text-coral';
+          feedback.classList.remove('hidden');
+        }
+      }
+    })
+    .catch(() => {
+      supplierSelect.innerHTML = '<option value="">No fue posible cargar proveedores</option>';
+    });
+
+  form.addEventListener('submit', (event) => {
+    event.preventDefault();
+    if (!form.checkValidity()) return form.reportValidity();
+
+    const lineRows = [...lines.querySelectorAll<HTMLTableRowElement>('tr')];
+    if (!lineRows.length) return window.alert('Agrega al menos un producto a la compra.');
+
+    const details = lineRows.map((row) => ({
+      productoId: Number(row.dataset.productId),
+      cantidad: Number(row.dataset.quantity),
+      costoUnitario: Number(row.dataset.cost)
+    }));
+
+    const payload = {
+      proveedorId: supplierSelect.value,
+      tipoDocumento: document.querySelector<HTMLSelectElement>('#purchase-type')!.value,
+      numeroDocumento: numberInput.value.trim(),
+      fechaEmision: dateInput.value,
+      fechaVencimiento: dueDateInput.value,
+      condicionPago: paymentTermsSelect.value,
+      fechaEntregaPedido: selectedDeliveryDate,
+      detalles: details
+    };
+
+    const method = purchaseId ? 'PUT' : 'POST';
+    const targetUrl = purchaseId ? `${apiBaseUrl}api/compras.php?id=${encodeURIComponent(purchaseId)}` : `${apiBaseUrl}api/compras.php`;
+
+    fetch(targetUrl, {
+      method,
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    })
+      .then(async (res) => {
+        const data = await res.json().catch(() => ({}));
+        if (!res.ok) throw new Error(data.message ?? 'No fue posible registrar la compra.');
+        window.location.assign(`${apiBaseUrl}compras/`);
+      })
+      .catch((err: Error) => {
+        const feedback = document.querySelector<HTMLElement>('#purchase-feedback')!;
+        feedback.textContent = err.message;
+        feedback.className = 'rounded-xl border border-[#ffdad6] bg-[#fff0eb] px-4 py-3 text-sm font-bold text-coral';
+        feedback.classList.remove('hidden');
+      });
+  });
+</script>
